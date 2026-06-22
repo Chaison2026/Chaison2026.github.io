@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Chaison 的个人主页</title>
     <style>
-        /* 全局样式 */
+        /* 全局样式 - 背景已设为深色 */
         * {
             margin: 0;
             padding: 0;
@@ -15,57 +15,45 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            /* 深色渐变背景，符合您的要求 */
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
             min-height: 100vh;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             padding: 20px;
         }
 
-        /* 卡片容器 */
-        .card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 24px;
-            padding: 50px 40px;
-            max-width: 500px;
-            width: 100%;
-            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
-            text-align: center;
-            transition: transform 0.3s ease;
-        }
+        /* 移除了 .card 样式，所有内容直接在 body 中布局 */
 
-        .card:hover {
-            transform: translateY(-5px);
-        }
-
-        /* 头像 - 完美适配图片 */
+        /* 头像 */
         .avatar {
             width: 120px;
             height: 120px;
             border-radius: 50%;
             object-fit: cover;
-            /* 确保图片不变形，裁剪为圆形 */
             margin: 0 auto 20px;
             display: block;
-            /* 让图片居中 */
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.1);
         }
 
-        /* 姓名 */
+        /* 姓名 - 浅色 */
         .name {
             font-size: 28px;
             font-weight: 700;
-            color: #1a1a2e;
+            color: #f0f0f5;
             margin-bottom: 6px;
+            text-align: center;
         }
 
         .title {
             font-size: 16px;
-            color: #667eea;
+            color: #a8b2ff;
             font-weight: 500;
             margin-bottom: 16px;
+            text-align: center;
         }
 
         /* 分隔线 */
@@ -77,87 +65,92 @@
             border-radius: 4px;
         }
 
-        /* 简介 */
+        /* 简介 - 浅色 */
         .bio {
-            color: #555;
+            color: #c8c8d4;
             font-size: 15px;
             line-height: 1.8;
             margin-bottom: 24px;
+            text-align: center;
+            max-width: 400px;
         }
 
-        /* 社交链接按钮 */
+        /* 社交链接按钮 - 深色适配 */
         .links {
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
             gap: 12px;
+            max-width: 500px;
         }
 
         .links a {
             display: inline-block;
             padding: 10px 24px;
             border-radius: 50px;
-            background: #f0f0f5;
-            color: #333;
+            background: rgba(255, 255, 255, 0.07);
+            color: #e0e0ea;
             text-decoration: none;
             font-size: 14px;
             font-weight: 500;
             transition: all 0.3s ease;
-            border: 1px solid transparent;
+            border: 1px solid rgba(255, 255, 255, 0.06);
             cursor: pointer;
         }
 
         .links a:hover {
-            background: #667eea;
+            background: linear-gradient(135deg, #667eea, #764ba2);
             color: #fff;
-            border-color: #667eea;
+            border-color: transparent;
             transform: scale(1.05);
-            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.35);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
         }
 
-        /* 底部版权 */
+        /* 底部版权 - 浅色 */
         .footer {
             margin-top: 28px;
             font-size: 13px;
-            color: #aaa;
+            color: rgba(255, 255, 255, 0.35);
+            text-align: center;
         }
 
         .footer a {
-            color: #667eea;
+            color: rgba(255, 255, 255, 0.55);
             text-decoration: none;
         }
 
         .footer a:hover {
+            color: #a8b2ff;
             text-decoration: underline;
         }
 
-        /* ========== 邮箱弹窗样式 ========== */
+        /* ========== 邮箱弹窗样式（未改动） ========== */
         .modal {
             display: none;
-            /* 默认隐藏 */
             position: fixed;
             z-index: 1000;
             left: 0;
             top: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
+            background-color: rgba(0, 0, 0, 0.6);
             justify-content: center;
             align-items: center;
             animation: fadeIn 0.3s ease;
         }
 
-        /* 弹窗卡片 */
         .modal-content {
-            background: white;
+            background: rgba(25, 25, 35, 0.95);
+            backdrop-filter: blur(16px);
             padding: 35px 40px 40px;
             border-radius: 24px;
             text-align: center;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
             max-width: 380px;
             width: 90%;
             position: relative;
             animation: slideUp 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.06);
         }
 
         .modal-content .email-icon {
@@ -167,14 +160,14 @@
 
         .modal-content .email-label {
             font-size: 14px;
-            color: #888;
+            color: rgba(255, 255, 255, 0.5);
             margin-bottom: 4px;
         }
 
         .modal-content .email-address {
             font-size: 20px;
             font-weight: 600;
-            color: #1a1a2e;
+            color: #f0f0f5;
             margin: 8px 0 18px;
             word-break: break-all;
         }
@@ -200,7 +193,6 @@
             transform: scale(0.96);
         }
 
-        /* 关闭按钮 (X) */
         .close-btn {
             position: absolute;
             top: 14px;
@@ -208,16 +200,15 @@
             font-size: 28px;
             font-weight: 300;
             cursor: pointer;
-            color: #aaa;
+            color: rgba(255, 255, 255, 0.4);
             transition: color 0.2s;
             line-height: 1;
         }
 
         .close-btn:hover {
-            color: #333;
+            color: #fff;
         }
 
-        /* 弹窗动画 */
         @keyframes fadeIn {
             from {
                 opacity: 0;
@@ -240,19 +231,15 @@
             }
         }
 
-        /* 响应式 */
+        /* 手机适配 */
         @media (max-width: 480px) {
-            .card {
-                padding: 32px 20px;
+            .avatar {
+                width: 90px;
+                height: 90px;
             }
 
             .name {
                 font-size: 22px;
-            }
-
-            .avatar {
-                width: 90px;
-                height: 90px;
             }
 
             .links a {
@@ -273,85 +260,70 @@
 
 <body>
 
-    <div class="card">
+    <!-- 头像 -->
+    <img src="https://cdn.luogu.com.cn/upload/image_hosting/24t4nfzv.png" alt="Chaison的头像" class="avatar" />
 
-        <!-- 头像 -->
-        <img src="https://cdn.luogu.com.cn/upload/image_hosting/24t4nfzv.png" alt="Chaison的头像" class="avatar" />
+    <!-- 姓名和头衔 -->
+    <h1 class="name">Chaison</h1>
+    <p class="title">✨ 探索者 · 创造者</p>
 
-        <!-- 姓名和头衔 -->
-        <h1 class="name">Chaison</h1>
-        <p class="title">✨ 探索者 · 创造者</p>
+    <div class="divider"></div>
 
-        <div class="divider"></div>
+    <!-- 个人简介 -->
+    <p class="bio">
+        你好！我是 Chaison。<br />
+        这是我的第一个网站。<br />
+        下面是相关链接：
+    </p>
 
-        <!-- 个人简介 -->
-        <p class="bio">
-            你好！我是 Chaison。<br />
-            这是我的第一个网站。<br />
-            下面是相关链接：
-        </p>
-
-        <!-- 社交链接 -->
-        <div class="links">
-            <a href="https://github.com/Chaison2026" target="_blank">🐙 GitHub</a>
-            <!-- 邮箱按钮：点击弹出弹窗 -->
-            <a href="#" onclick="openEmailModal(); return false;"> 📧 邮箱</a>
-            <a href="https://www.luogu.com.cn/user/1836843" target="_blank">📝 洛谷</a>
-        </div>
-
-        <!-- 底部 -->
-        <div class="footer">
-            © 2026 <a href="https://Chaison2026.github.io" target="_blank">Chaison</a> · 用 HTML 构建
-        </div>
-
+    <!-- 社交链接 -->
+    <div class="links">
+        <a href="https://github.com/Chaison2026" target="_blank">🐙 GitHub</a>
+        <a href="#" onclick="openEmailModal(); return false;"> 📧 邮箱</a>
+        <a href="https://www.luogu.com.cn/user/1836843" target="_blank">📝 洛谷</a>
+        <a href="https://atcoder.jp/users/Chen_Zhen_DY" target="_blank">⚡ AtCoder</a>
     </div>
 
-    <!-- ========== 邮箱弹窗 HTML ========== -->
+    <!-- 底部 -->
+    <div class="footer">
+        © 2026 <a href="https://Chaison2026.github.io" target="_blank">Chaison</a> · 用 HTML 构建
+    </div>
+
+    <!-- ========== 邮箱弹窗 ========== -->
     <div id="emailModal" class="modal">
         <div class="modal-content">
-            <!-- 关闭按钮 -->
             <span class="close-btn" onclick="closeEmailModal()">&times;</span>
-
             <div class="email-icon">📧</div>
             <div class="email-label">我的邮箱</div>
             <div class="email-address">chen_zhen2026@126.com</div>
-
-            <!-- 复制按钮 -->
             <button class="copy-btn" onclick="copyEmail()">📋 复制邮箱</button>
         </div>
     </div>
 
     <!-- ========== JavaScript ========== -->
     <script>
-        // 打开弹窗
         function openEmailModal() {
             document.getElementById('emailModal').style.display = 'flex';
-            // 禁止页面滚动
             document.body.style.overflow = 'hidden';
         }
 
-        // 关闭弹窗
         function closeEmailModal() {
             document.getElementById('emailModal').style.display = 'none';
             document.body.style.overflow = 'auto';
         }
 
-        // 复制邮箱并提示
         function copyEmail() {
             const email = 'chen_zhen2026@126.com';
             navigator.clipboard.writeText(email).then(() => {
-                // 复制成功，显示一个简单的提示（替换弹窗内容）
                 const modalContent = document.querySelector('.modal-content');
-                // 保存原始内容以便恢复（但关闭弹窗后重新打开会重置，所以直接替换即可）
                 modalContent.innerHTML = `
                     <div style="padding: 20px 0;">
                         <div style="font-size: 56px; margin-bottom: 10px;">✅</div>
-                        <div style="font-size: 20px; font-weight: 600; color: #1a1a2e; margin-bottom: 6px;">已复制！</div>
-                        <div style="font-size: 14px; color: #888; margin-bottom: 20px;">${email}</div>
-                        <button class="copy-btn" onclick="closeEmailModal()" style="background: #667eea; padding: 10px 32px; color: white; border: none; border-radius: 50px; font-size: 16px; cursor: pointer;">我知道了</button>
+                        <div style="font-size: 20px; font-weight: 600; color: #f0f0f5; margin-bottom: 6px;">已复制！</div>
+                        <div style="font-size: 14px; color: rgba(255,255,255,0.5); margin-bottom: 20px;">${email}</div>
+                        <button class="copy-btn" onclick="closeEmailModal()" style="background: linear-gradient(135deg, #667eea, #764ba2); padding: 10px 32px; color: white; border: none; border-radius: 50px; font-size: 16px; cursor: pointer;">我知道了</button>
                     </div>
                 `;
-                // 调整样式，让关闭按钮隐藏（因为内容变了）
                 const closeBtn = document.querySelector('.close-btn');
                 if (closeBtn) closeBtn.style.display = 'none';
             }).catch(() => {
@@ -359,7 +331,6 @@
             });
         }
 
-        // 点击弹窗背景（灰色区域）关闭弹窗
         window.onclick = function (event) {
             var modal = document.getElementById('emailModal');
             if (event.target == modal) {
@@ -367,7 +338,6 @@
             }
         }
 
-        // 按 ESC 键关闭弹窗
         document.addEventListener('keydown', function (event) {
             if (event.key === 'Escape') {
                 closeEmailModal();
