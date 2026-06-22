@@ -40,21 +40,17 @@
             transform: translateY(-5px);
         }
 
-        /* 头像 */
+        /* 头像 - 完美适配图片 */
         .avatar {
             width: 120px;
             height: 120px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            object-fit: cover;
+            /* 确保图片不变形，裁剪为圆形 */
             margin: 0 auto 20px;
-            font-size: 48px;
-            color: #fff;
-            font-weight: bold;
+            display: block;
+            /* 让图片居中 */
             box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-            user-select: none;
         }
 
         /* 姓名 */
@@ -108,6 +104,7 @@
             font-weight: 500;
             transition: all 0.3s ease;
             border: 1px solid transparent;
+            cursor: pointer;
         }
 
         .links a:hover {
@@ -134,7 +131,116 @@
             text-decoration: underline;
         }
 
-        /* 响应式：手机适配 */
+        /* ========== 邮箱弹窗样式 ========== */
+        .modal {
+            display: none;
+            /* 默认隐藏 */
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        /* 弹窗卡片 */
+        .modal-content {
+            background: white;
+            padding: 35px 40px 40px;
+            border-radius: 24px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 380px;
+            width: 90%;
+            position: relative;
+            animation: slideUp 0.3s ease;
+        }
+
+        .modal-content .email-icon {
+            font-size: 48px;
+            margin-bottom: 6px;
+        }
+
+        .modal-content .email-label {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 4px;
+        }
+
+        .modal-content .email-address {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1a1a2e;
+            margin: 8px 0 18px;
+            word-break: break-all;
+        }
+
+        .modal-content .copy-btn {
+            padding: 10px 32px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .modal-content .copy-btn:hover {
+            transform: scale(1.04);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .modal-content .copy-btn:active {
+            transform: scale(0.96);
+        }
+
+        /* 关闭按钮 (X) */
+        .close-btn {
+            position: absolute;
+            top: 14px;
+            right: 20px;
+            font-size: 28px;
+            font-weight: 300;
+            cursor: pointer;
+            color: #aaa;
+            transition: color 0.2s;
+            line-height: 1;
+        }
+
+        .close-btn:hover {
+            color: #333;
+        }
+
+        /* 弹窗动画 */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 响应式 */
         @media (max-width: 480px) {
             .card {
                 padding: 32px 20px;
@@ -147,12 +253,19 @@
             .avatar {
                 width: 90px;
                 height: 90px;
-                font-size: 36px;
             }
 
             .links a {
                 padding: 8px 18px;
                 font-size: 13px;
+            }
+
+            .modal-content {
+                padding: 30px 24px 32px;
+            }
+
+            .modal-content .email-address {
+                font-size: 17px;
             }
         }
     </style>
@@ -162,8 +275,8 @@
 
     <div class="card">
 
-        <!-- 头像（显示名字首字母） -->
-        <div class="avatar">C</div>
+        <!-- 头像 -->
+        <img src="https://cdn.luogu.com.cn/upload/image_hosting/24t4nfzv.png" alt="Chaison的头像" class="avatar" />
 
         <!-- 姓名和头衔 -->
         <h1 class="name">Chaison</h1>
@@ -174,23 +287,93 @@
         <!-- 个人简介 -->
         <p class="bio">
             你好！我是 Chaison。<br />
-            这里是我在 GitHub 上的第一个网站。<br />
-            正在学习编程，探索无限可能 🚀
+            这是我的第一个网站。<br />
+            下面是相关链接：
         </p>
 
-        <!-- 社交链接（你可以换成自己的） -->
+        <!-- 社交链接 -->
         <div class="links">
             <a href="https://github.com/Chaison2026" target="_blank">🐙 GitHub</a>
-            <a href="mailto:chen_zhen2026@126.com">📧 邮箱</a>
-            <a href="#" target="_blank">📝 博客</a>
+            <!-- 邮箱按钮：点击弹出弹窗 -->
+            <a href="#" onclick="openEmailModal(); return false;"> 📧 邮箱</a>
+            <a href="https://www.luogu.com.cn/user/1836843" target="_blank">📝 洛谷</a>
         </div>
 
         <!-- 底部 -->
         <div class="footer">
-            © 2026 <a href="https://zs.Chaison.github.io" target="_blank">Chaison</a> · 用 ❤️ 和 HTML 构建
+            © 2026 <a href="https://Chaison2026.github.io" target="_blank">Chaison</a> · 用 HTML 构建
         </div>
 
     </div>
+
+    <!-- ========== 邮箱弹窗 HTML ========== -->
+    <div id="emailModal" class="modal">
+        <div class="modal-content">
+            <!-- 关闭按钮 -->
+            <span class="close-btn" onclick="closeEmailModal()">&times;</span>
+
+            <div class="email-icon">📧</div>
+            <div class="email-label">我的邮箱</div>
+            <div class="email-address">chen_zhen2026@126.com</div>
+
+            <!-- 复制按钮 -->
+            <button class="copy-btn" onclick="copyEmail()">📋 复制邮箱</button>
+        </div>
+    </div>
+
+    <!-- ========== JavaScript ========== -->
+    <script>
+        // 打开弹窗
+        function openEmailModal() {
+            document.getElementById('emailModal').style.display = 'flex';
+            // 禁止页面滚动
+            document.body.style.overflow = 'hidden';
+        }
+
+        // 关闭弹窗
+        function closeEmailModal() {
+            document.getElementById('emailModal').style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        // 复制邮箱并提示
+        function copyEmail() {
+            const email = 'chen_zhen2026@126.com';
+            navigator.clipboard.writeText(email).then(() => {
+                // 复制成功，显示一个简单的提示（替换弹窗内容）
+                const modalContent = document.querySelector('.modal-content');
+                // 保存原始内容以便恢复（但关闭弹窗后重新打开会重置，所以直接替换即可）
+                modalContent.innerHTML = `
+                    <div style="padding: 20px 0;">
+                        <div style="font-size: 56px; margin-bottom: 10px;">✅</div>
+                        <div style="font-size: 20px; font-weight: 600; color: #1a1a2e; margin-bottom: 6px;">已复制！</div>
+                        <div style="font-size: 14px; color: #888; margin-bottom: 20px;">${email}</div>
+                        <button class="copy-btn" onclick="closeEmailModal()" style="background: #667eea; padding: 10px 32px; color: white; border: none; border-radius: 50px; font-size: 16px; cursor: pointer;">我知道了</button>
+                    </div>
+                `;
+                // 调整样式，让关闭按钮隐藏（因为内容变了）
+                const closeBtn = document.querySelector('.close-btn');
+                if (closeBtn) closeBtn.style.display = 'none';
+            }).catch(() => {
+                alert('复制失败，请手动复制：chen_zhen2026@126.com');
+            });
+        }
+
+        // 点击弹窗背景（灰色区域）关闭弹窗
+        window.onclick = function (event) {
+            var modal = document.getElementById('emailModal');
+            if (event.target == modal) {
+                closeEmailModal();
+            }
+        }
+
+        // 按 ESC 键关闭弹窗
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+                closeEmailModal();
+            }
+        });
+    </script>
 
 </body>
 
