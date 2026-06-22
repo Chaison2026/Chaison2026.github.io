@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chaison 的个人主页</title>
+    <style>
+        /* 全局样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* 卡片容器 */
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            padding: 50px 40px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        /* 头像 */
+        .avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 20px;
+            font-size: 48px;
+            color: #fff;
+            font-weight: bold;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+            user-select: none;
+        }
+
+        /* 姓名 */
+        .name {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 6px;
+        }
+
+        .title {
+            font-size: 16px;
+            color: #667eea;
+            font-weight: 500;
+            margin-bottom: 16px;
+        }
+
+        /* 分隔线 */
+        .divider {
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            margin: 16px auto;
+            border-radius: 4px;
+        }
+
+        /* 简介 */
+        .bio {
+            color: #555;
+            font-size: 15px;
+            line-height: 1.8;
+            margin-bottom: 24px;
+        }
+
+        /* 社交链接按钮 */
+        .links {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .links a {
+            display: inline-block;
+            padding: 10px 24px;
+            border-radius: 50px;
+            background: #f0f0f5;
+            color: #333;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+
+        .links a:hover {
+            background: #667eea;
+            color: #fff;
+            border-color: #667eea;
+            transform: scale(1.05);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.35);
+        }
+
+        /* 底部版权 */
+        .footer {
+            margin-top: 28px;
+            font-size: 13px;
+            color: #aaa;
+        }
+
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* 响应式：手机适配 */
+        @media (max-width: 480px) {
+            .card {
+                padding: 32px 20px;
+            }
+
+            .name {
+                font-size: 22px;
+            }
+
+            .avatar {
+                width: 90px;
+                height: 90px;
+                font-size: 36px;
+            }
+
+            .links a {
+                padding: 8px 18px;
+                font-size: 13px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="card">
+
+        <!-- 头像（显示名字首字母） -->
+        <div class="avatar">C</div>
+
+        <!-- 姓名和头衔 -->
+        <h1 class="name">Chaison</h1>
+        <p class="title">✨ 探索者 · 创造者</p>
+
+        <div class="divider"></div>
+
+        <!-- 个人简介 -->
+        <p class="bio">
+            你好！我是 Chaison。<br />
+            这里是我在 GitHub 上的第一个网站。<br />
+            正在学习编程，探索无限可能 🚀
+        </p>
+
+        <!-- 社交链接（你可以换成自己的） -->
+        <div class="links">
+            <a href="https://github.com/Chaison2026" target="_blank">🐙 GitHub</a>
+            <a href="mailto:chen_zhen2026@126.com">📧 邮箱</a>
+            <a href="#" target="_blank">📝 博客</a>
+        </div>
+
+        <!-- 底部 -->
+        <div class="footer">
+            © 2026 <a href="https://zs.Chaison.github.io" target="_blank">Chaison</a> · 用 ❤️ 和 HTML 构建
+        </div>
+
+    </div>
+
+</body>
+
+</html>
