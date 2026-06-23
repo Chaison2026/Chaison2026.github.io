@@ -4,9 +4,8 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Chaison 的代码空间</title>
+    <title>算法模板题 - Chaison的代码空间</title>
     <style>
-        /* 全局样式 - 与主页保持一致 */
         * {
             margin: 0;
             padding: 0;
@@ -17,95 +16,195 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
             min-height: 100vh;
+            padding: 30px 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        /* 顶部导航 */
+        .header {
             display: flex;
-            flex-direction: column;
-            justify-content: center;
+            justify-content: space-between;
             align-items: center;
-            padding: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 12px;
         }
 
-        .content {
-            text-align: center;
-            max-width: 700px;
-            width: 100%;
-        }
-
-        h1 {
-            font-size: 36px;
-            font-weight: 700;
+        .header h1 {
             color: #f0f0f5;
-            margin-bottom: 16px;
+            font-size: 28px;
         }
 
-        .subtitle {
-            font-size: 18px;
+        .header a {
             color: #a8b2ff;
-            margin-bottom: 24px;
-        }
-
-        .divider {
-            width: 60px;
-            height: 3px;
-            background: linear-gradient(90deg, #667eea, #764ba2);
-            margin: 0 auto 28px;
-            border-radius: 4px;
-        }
-
-        .description {
-            color: #c8c8d4;
-            font-size: 16px;
-            line-height: 1.8;
-            margin-bottom: 32px;
-        }
-
-        .back-link {
-            display: inline-block;
-            padding: 12px 32px;
+            text-decoration: none;
+            padding: 8px 20px;
             border-radius: 50px;
             background: rgba(255, 255, 255, 0.07);
-            color: #e0e0ea;
-            text-decoration: none;
-            font-size: 15px;
-            font-weight: 500;
+            border: 1px solid rgba(255, 255, 255, 0.06);
             transition: all 0.3s ease;
+        }
+
+        .header a:hover {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+        }
+
+        /* 目录卡片 */
+        .toc {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 24px 30px;
+            margin-bottom: 30px;
             border: 1px solid rgba(255, 255, 255, 0.06);
         }
 
-        .back-link:hover {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: #fff;
-            border-color: transparent;
-            transform: scale(1.05);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        .toc h2 {
+            color: #f0f0f5;
+            font-size: 20px;
+            margin-bottom: 14px;
+        }
+
+        .toc-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 6px 20px;
+        }
+
+        .toc-grid a {
+            color: #c8c8d4;
+            text-decoration: none;
+            font-size: 14px;
+            padding: 4px 0;
+            transition: color 0.2s;
+            display: block;
+        }
+
+        .toc-grid a:hover {
+            color: #a8b2ff;
+        }
+
+        .toc-tag {
+            font-size: 12px;
+            padding: 2px 10px;
+            border-radius: 20px;
+            margin-left: 6px;
+        }
+
+        .tag-orange {
+            color: #f0a030;
+        }
+        .tag-yellow {
+            color: #f5d742;
+        }
+        .tag-green {
+            color: #5cb85c;
+        }
+        .tag-blue {
+            color: #5bc0de;
+        }
+        .tag-purple {
+            color: #b48ad9;
+        }
+
+        /* 代码卡片 */
+        .code-card {
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 16px;
+            padding: 20px 24px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            scroll-margin-top: 20px;
+        }
+
+        .code-card .title-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .code-card .title-row h3 {
+            color: #f0f0f5;
+            font-size: 18px;
+        }
+
+        .code-card .title-row a {
+            color: #a8b2ff;
+            text-decoration: none;
+            font-size: 14px;
+            padding: 4px 14px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.06);
+            transition: all 0.2s;
+        }
+
+        .code-card .title-row a:hover {
+            background: rgba(102, 126, 234, 0.3);
+        }
+
+        .code-card pre {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 12px;
+            padding: 16px 20px;
+            overflow-x: auto;
+            font-size: 13px;
+            line-height: 1.7;
+            color: #e0e0ea;
+            font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .code-card pre::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .code-card pre::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+        .code-card pre::-webkit-scrollbar-thumb {
+            background: rgba(102, 126, 234, 0.4);
+            border-radius: 8px;
         }
 
         .footer {
+            text-align: center;
             margin-top: 40px;
+            color: rgba(255, 255, 255, 0.3);
             font-size: 13px;
-            color: rgba(255, 255, 255, 0.35);
         }
 
         .footer a {
-            color: rgba(255, 255, 255, 0.55);
+            color: rgba(255, 255, 255, 0.5);
             text-decoration: none;
         }
 
         .footer a:hover {
             color: #a8b2ff;
-            text-decoration: underline;
         }
 
-        @media (max-width: 480px) {
-            h1 {
-                font-size: 28px;
+        @media (max-width: 600px) {
+            .header h1 {
+                font-size: 20px;
             }
-
-            .subtitle {
-                font-size: 16px;
+            .toc-grid {
+                grid-template-columns: 1fr 1fr;
             }
-
-            .description {
-                font-size: 15px;
+            .code-card {
+                padding: 14px 16px;
+            }
+            .code-card pre {
+                font-size: 12px;
+                padding: 12px 14px;
+                max-height: 350px;
             }
         }
     </style>
@@ -113,17 +212,1581 @@
 
 <body>
 
-    <div class="content">
-        <h1>各类模板题代码</h1>
-        <p class="subtitle"></p>
-        <div class="divider"></div>
-        <p class="description">
-            <br />
-        </p>
-        <a href="/" class="back-link">返回主页</a>
-        <div class="footer">
-            © 2026-2026 <a href="https://Chaison2026.github.io" target="_blank">Chaison</a>
+    <div class="container">
+
+        <!-- 顶部 -->
+        <div class="header">
+            <h1>🧑‍💻 算法模板题集</h1>
+            <a href="/">🏠 返回主页</a>
         </div>
+
+        <!-- ===== 目录 ===== -->
+        <div class="toc" id="top">
+            <h2>📑 目录</h2>
+
+            <div style="margin-top: 10px;">
+                <p style="color: #a8b2ff; font-weight: 500; margin-bottom: 6px;">🟠 模板橙题</p>
+                <div class="toc-grid">
+                    <a href="#P1177">P1177 排序</a>
+                    <a href="#P1226">P1226 快速幂</a>
+                    <a href="#B3614">B3614 栈</a>
+                    <a href="#B3616">B3616 队列</a>
+                    <a href="#P10815">P10815 快速读入</a>
+                </div>
+            </div>
+
+            <div style="margin-top: 12px;">
+                <p style="color: #f5d742; font-weight: 500; margin-bottom: 6px;">🟡 模板黄题</p>
+                <div class="toc-grid">
+                    <a href="#B3644">B3644 拓扑排序</a>
+                    <a href="#P3378">P3378 堆</a>
+                    <a href="#P3366">P3366 最小生成树</a>
+                    <a href="#P1886">P1886 单调队列</a>
+                    <a href="#P3371">P3371 最短路(弱)</a>
+                    <a href="#P3379">P3379 LCA</a>
+                    <a href="#P3385">P3385 负环</a>
+                    <a href="#B3647">B3647 Floyd</a>
+                    <a href="#P3865">P3865 ST表</a>
+                    <a href="#P4779">P4779 最短路(标)</a>
+                </div>
+            </div>
+
+            <div style="margin-top: 12px;">
+                <p style="color: #5cb85c; font-weight: 500; margin-bottom: 6px;">🟢 模板绿题</p>
+                <div class="toc-grid">
+                    <a href="#P3368">P3368 树状数组2</a>
+                    <a href="#P3374">P3374 树状数组1</a>
+                    <a href="#P3375">P3375 KMP</a>
+                    <a href="#P3390">P3390 矩阵快速幂</a>
+                    <a href="#P5960">P5960 差分约束</a>
+                </div>
+            </div>
+
+            <div style="margin-top: 12px;">
+                <p style="color: #5bc0de; font-weight: 500; margin-bottom: 6px;">🔵 模板蓝题</p>
+                <div class="toc-grid">
+                    <a href="#P3369">P3369 普通平衡树</a>
+                    <a href="#P3376">P3376 网络最大流</a>
+                    <a href="#P3381">P3381 费用流</a>
+                    <a href="#P3391">P3391 文艺平衡树</a>
+                    <a href="#P3805">P3805 Manacher</a>
+                    <a href="#P5410">P5410 exKMP</a>
+                    <a href="#P6136">P6136 平衡树加强</a>
+                </div>
+            </div>
+
+            <div style="margin-top: 12px;">
+                <p style="color: #b48ad9; font-weight: 500; margin-bottom: 6px;">🟣 模板紫题</p>
+                <div class="toc-grid">
+                    <a href="#P6192">P6192 斯坦纳树</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== 代码列表 ===== -->
+
+        <!-- 橙题 -->
+        <div id="P1177" class="code-card">
+            <div class="title-row">
+                <h3>🟠 P1177 【模板】排序</h3>
+                <a href="https://www.luogu.com.cn/problem/P1177" target="_blank">查看原题 →</a>
+            </div>
+            <pre><code>#include &lt;bits/stdc++.h&gt;
+using namespace std;
+priority_queue&lt;int,vector&lt;int&gt;,greater&lt;int&gt;&gt;q;
+int n;
+signed main(void) {
+    ios_base::sync_with_stdio(false),cin.tie(nullptr),cout.tie(nullptr);
+    scanf("%d",&n);
+    for(int i=1,x;i&lt;=n;++i){
+        scanf("%d",&x);
+        q.push(x);
+    }
+    while(!q.empty()){
+        printf("%d ",q.top());
+        q.pop();
+    }
+    return 0;
+}</code></pre>
+        </div>
+
+        <div id="P1226" class="code-card">
+            <div class="title-row">
+                <h3>🟠 P1226 【模板】快速幂</h3>
+                <a href="https://www.luogu.com.cn/problem/P1226" target="_blank">查看原题 →</a>
+            </div>
+            <pre><code>#include&lt;bits/stdc++.h&gt;
+using namespace std;
+#define int long long
+int p;
+int binpow(int a,int b)
+{
+    if(b==0) return 1;
+    int res=binpow(a,b/2);
+    if(b%2) return res*res%p*a%p;
+    else return res*res%p;
+}
+signed main()
+{
+    int a,b;
+    cin>>a>>b>>p;
+    cout&lt;&lt;a&lt;&lt;"^"&lt;&lt;b&lt;&lt;" mod "&lt;&lt;p&lt;&lt;"="&lt;&lt;binpow(a,b)%p;
+}</code></pre>
+        </div>
+
+        <div id="B3614" class="code-card">
+            <div class="title-row">
+                <h3>🟠 B3614 【模板】栈</h3>
+                <a href="https://www.luogu.com.cn/problem/B3614" target="_blank">查看原题 →</a>
+            </div>
+            <pre><code>#include &lt;bits/stdc++.h&gt;
+using namespace std;
+int main() {
+   cin.tie(0);
+   ios::sync_with_stdio(false);
+  int T, n;
+  for ( cin >> T; T; --T) {
+     stack&lt;unsigned long long int&gt; s;
+    for ( cin >> n; n; --n) {
+       string t;
+       cin >> t;
+      if (t == "push") {
+        unsigned long long x;
+         cin >> x; s.push(x);
+      } else if (t == "pop") {
+        if (s.empty())  cout << "Empty\n";
+        else s.pop();
+      } else if (t == "query") {
+        if (s.empty())  cout << "Anguei!\n";
+        else  cout << s.top() << '\n';
+      } else cout << s.size() << '\n';
+        }
+    }
+  return 0;
+}</code></pre>
+        </div>
+
+        <div id="B3616" class="code-card">
+            <div class="title-row">
+                <h3>🟠 B3616 【模板】队列</h3>
+                <a href="https://www.luogu.com.cn/problem/B3616" target="_blank">查看原题 →</a>
+            </div>
+            <pre><code>#include&lt;bits/stdc++.h&gt;
+using namespace std;
+int n,op,x;
+queue&lt;int&gt;q; 
+int main(){
+    scanf("%d",&n);
+    while(n--){
+        scanf("%d",&op);
+        if(op==1){
+            scanf("%d",&x);
+            q.push(x);
+        }
+        else if(op==2){
+            if(q.empty())printf("ERR_CANNOT_POP\n");
+            else q.pop();
+        }
+        else if(op==3){
+            if(q.empty())printf("ERR_CANNOT_QUERY\n");
+            else printf("%d\n",q.front());
+        }
+        else printf("%d\n",q.size());
+    }
+}</code></pre>
+        </div>
+
+        <div id="P10815" class="code-card">
+            <div class="title-row">
+                <h3>🟠 P10815 【模板】快速读入</h3>
+                <a href="https://www.luogu.com.cn/problem/P10815" target="_blank">查看原题 →</a>
+            </div>
+            <pre><code>#include &lt;bits/stdc++.h&gt;
+uint8_t buf[1&lt;&lt;20], *p1, *p2;
+#define gc() (p1==p2 && (p2=(p1=buf)+fread(buf,1,1&lt;&lt;20,stdin)),*p1++)
+int readint() {
+    int k = 0, f = 1, c = gc();
+    for (; !isdigit(c); c = gc()) if (c == '-') f = -1;
+    for (; isdigit(c); c = gc()) k = k * 10 + (c ^ 48);
+    return k * f;
+}
+int main() {
+    int n = readint(), ans = 0;
+    while (n --) ans += readint();
+    printf("%d", ans);
+}</code></pre>
+        </div>
+
+        <!-- 黄题 -->
+        <div id="B3644" class="code-card">
+            <div class="title-row">
+                <h3>🟡 B3644 【模板】拓扑排序</h3>
+                <a href="https://www.luogu.com.cn/problem/B3644" target="_blank">查看原题 →</a>
+            </div>
+            <pre><code>#include&lt;bits/stdc++.h&gt;
+using namespace std;
+int n,in[110];
+vector&lt;int&gt;g[110];
+queue&lt;int&gt;q;
+void topo(){
+    while(!q.empty()){
+        int k=q.front();
+        q.pop();
+        cout&lt;&lt;k&lt;&lt;" ";
+        for(auto i:g[k]){
+            in[i]--;
+            if(in[i]==0)q.push(i);
+        }
+    }
+}
+int main(){
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    cout.tie(0);
+    cin>>n;
+    for(int i=1;i&lt;=n;i++){
+        int x;
+        cin>>x;
+        while(x!=0){
+            g[i].push_back(x);
+            in[x]++;
+            cin>>x;
+        }
+    }
+    for(int i=1;i&lt;=n;i++)if(in[i]==0)
+        q.push(i);
+    topo();
+}</code></pre>
+        </div>
+
+        <div id="P3378" class="code-card">
+            <div class="title-row">
+                <h3>🟡 P3378 【模板】堆</h3>
+                <a href="https://www.luogu.com.cn/problem/P3378" target="_blank">查看原题 →</a>
+            </div>
+            <pre><code>#include&lt;bits/stdc++.h&gt;
+using namespace std;
+int n;
+priority_queue&lt;int,vector&lt;int&gt;,greater&lt;int&gt;&gt;pq;
+signed main(void){
+    scanf("%d",&n);
+    for(int op,x;n;--n){
+        scanf("%d",&op);
+        if(op==1){
+            scanf("%d",&x);
+            pq.push(x);
+        }
+        else if(op==2){
+            printf("%d\n",pq.top());
+        }
+        else{
+            pq.pop();
+        }
+    }
+}</code></pre>
+        </div>
+
+        <div id="P3366" class="code-card">
+            <div class="title-row">
+                <h3>🟡 P3366 【模板】最小生成树</h3>
+                <a href="https://www.luogu.com.cn/problem/P3366" target="_blank">查看原题 →</a>
+            </div>
+            <pre><code>#include&lt;bits/stdc++.h&gt;
+using namespace std;
+struct dada{
+    int u,v,w;
+    friend bool operator &lt; (dada x,dada y)
+    {
+        return x.w&lt;y.w;
+    }
+};
+vector&lt;long long&gt;p;
+long long find(long long x)
+{
+    if(x==p[x]) return x;
+    return p[x]=find(p[x]);
+}
+int main(){
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    cout.tie(0);
+    long long n,m;
+    cin>>n>>m;
+    vector&lt;dada&gt;ed(n+1);
+    p.resize(n+1);
+    for(int i=1;i&lt;=n;i++) p[i]=i;
+    while(m--)
+    {
+        long long u,v,w;
+        cin>>u>>v>>w;
+        ed.push_back({u,v,w});
+    }
+    sort(ed.begin(),ed.end());
+    long long ans=0;
+    long long cnt=0;
+    for(int i=0;i&lt;ed.size();i++)
+    {
+        long long u=ed[i].u,v=ed[i].v,w=ed[i].w;
+        long long r1=find(u),r2=find(v);
+        if(r1!=r2)
+        {
+            ans+=w;
+            p[r1]=r2;
+            cnt++;
+        }
+    }
+    if(cnt!=n-1){
+        cout<<"orz";
+        return 0;
+    }
+    cout<<ans;
+    return 0;
+}</code></pre>
+        </div>
+
+        <div id="P1886" class="code-card">
+            <div class="title-row">
+                <h3>🟡 P1886 【模板】单调队列</h3>
+                <a href="https://www.luogu.com.cn/problem/P1886" target="_blank">查看原题 →</a>
+            </div>
+            <pre><code>#include&lt;bits/stdc++.h&gt;
+using namespace std;
+signed main(){
+    deque&lt;int&gt;dq;
+    int n,m;
+    scanf("%d%d",&n,&m);
+    vector&lt;int&gt;a(n+1);
+    for(int i=1;i&lt;=n;++i)scanf("%d",&a[i]);
+    for(int i=1;i&lt;=n;++i){
+        while(!dq.empty() and a[dq.back()]>a[i])dq.pop_back();
+        dq.push_back(i);
+        if(i>=m){
+            while(!dq.empty() and dq.front()&lt;=i-m)dq.pop_front();
+            printf("%d ",a[dq.front()]);
+        }
+    }
+    printf("\n");
+    while(!dq.empty())dq.pop_front();
+    for(int i=1;i&lt;=n;++i){
+        while(!dq.empty() and a[dq.back()]&lt;a[i])dq.pop_back();
+        dq.push_back(i);
+        if(i>=m){
+            while(!dq.empty() and dq.front()&lt;=i-m)dq.pop_front();
+            printf("%d ",a[dq.front()]);
+        }
+    }
+    return 0;
+}</code></pre>
+        </div>
+
+        <div id="P3371" class="code-card">
+            <div class="title-row">
+                <h3>🟡 P3371 【模板】最短路（弱化版）</h3>
+                <a href="https://www.luogu.com.cn/problem/P3371" target="_blank">查看原题 →</a>
+            </div>
+            <pre><code>#include &lt;bits/stdc++.h&gt;
+#define fi first
+#define se second
+using namespace std;
+using ll=long long;
+const ll M=5e5+0xf;
+ll n,m,s,head[M&lt;&lt;1],tot=1,vis[M&lt;&lt;1],dis[M&lt;&lt;1];
+pair&lt;pair&lt;ll,ll&gt;,ll&gt;edge[M&lt;&lt;1];
+void Google_Chrome(ll u,ll v,ll w){
+    edge[tot].fi.fi=v;
+    edge[tot].fi.se=w;
+    edge[tot].se=head[u];
+    head[u]=tot++;
+}
+void Dijkstra(ll start){
+    for(int i=1;i&lt;(M&lt;&lt;1);++i)dis[i]=INT_MAX;
+    dis[start]=0,vis[start]=1;
+    ll s=1,u=start;
+    while(s&lt;n){
+        for(ll i=head[u];i!=-1;i=edge[i].se){
+            ll v=edge[i].fi.fi,w=edge[i].fi.se;
+            if(vis[v])continue;
+            if(dis[v]>dis[u]+w)
+                dis[v]=dis[u]+w;
+        }
+        ll min_num=0x7f7f7f7f,jl=0;
+        for(ll i=1;i&lt;=n;++i){
+            if(vis[i])continue;
+            if(min_num>=dis[i])
+                min_num=dis[i],jl=i;
+        }
+        vis[jl]=1;
+        u=jl;
+        s++;
+    }
+}
+signed main(void) {
+    ios::sync_with_stdio(false),cin.tie(nullptr),cout.tie(nullptr);
+    memset(head,-1,sizeof head);
+    cin>>n>>m>>s;
+    for(ll i=1,u,v,w;i&lt;=m;++i){
+        cin>>u>>v>>w;
+        Google_Chrome(u,v,w);
+    }
+    Dijkstra(s);
+    for(ll i=1;i&lt;=n;++i)
+        cout&lt;&lt;dis[i]&lt;&lt;' ';
+    exit(0);
+}</code></pre>
+        </div>
+
+        <div id="P3379" class="code-card">
+            <div class="title-row">
+                <h3>🟡 P3379 【模板】LCA</h3>
+                <a href="https://www.luogu.com.cn/problem/P3379" target="_blank">查看原题 →</a>
+            </div>
+            <pre><code>#include&lt;bits/stdc++.h&gt;
+using namespace std;
+int n,m,d[500007],f[500007][21],g=1,st[500007],head[500007], tot=1,root;
+struct Edge{
+  int to , next;
+}e[500007&lt;&lt;1];
+void add(int u,int v){
+  e[tot].to = v;
+  e[tot].next = head[u];
+  head[u] = tot++;
+}
+void dfs(int u,int fa)
+{
+  f[u][0] = fa;
+  d[u] = d[fa]+1;
+  st[u]=g++;
+  for(int i=1;(1&lt;&lt;i)&lt;=d[u];i++)
+      f[u][i] = f[f[u][i-1]][i-1];
+  for(int i=head[u];i!=0;i=e[i].next){
+      int v = e[i].to;
+      if(v!=fa)
+          dfs(v,u);
+  }
+}
+int LCA(int x,int y){
+  if(d[x]>d[y])
+      swap(x,y);
+  for(int i=20;i>=0;i--){
+      if(d[y]-(1&lt;&lt;i)>=d[x])
+          y=f[y][i];
+  }
+  if(x==y) return y;
+  for(int i=20;i>=0;i--){
+      if(f[x][i]!=f[y][i])
+          x=f[x][i],y=f[y][i]; 
+  }
+  return f[x][0];
+}
+signed main(void){
+  ios::sync_with_stdio(false),cin.tie(nullptr),cout.tie(nullptr);
+  cin>>n>>m>>root;
+  for(int i=1,a,b;i&lt;n;i++){
+      cin>>a>>b;
+      add(a,b),add(b,a);
+  }
+  dfs(root,0);
+  for(int i=1,a,b;i&lt;=m;i++){
+      cin>>a>>b;
+      cout&lt;&lt;LCA(a,b)&lt;&lt;endl;
+  }
+  return exit(0),0;
+}</code></pre>
+        </div>
+
+        <div id="P3385" class="code-card">
+            <div class="title-row">
+                <h3>🟡 P3385 【模板】负环</h3>
+                <a href="https://www.luogu.com.cn/problem/P3385" target="_blank">查看原题 →</a>
+            </div>
+            <pre><code>#include &lt;bits/stdc++.h&gt;
+#define fi first
+#define se second
+using namespace std;
+const int M=3e3+0xf;
+int T,head[M],tot=1,dis[M],cnt[M];
+bool vis[M];
+pair&lt;pair&lt;int,int&gt;,int&gt;edge[M&lt;&lt;1];
+void Google_Chrome(int u,int v,int w){
+    edge[tot].fi.fi=v;
+    edge[tot].fi.se=w;
+    edge[tot].se=head[u];
+    head[u]=tot++;
+}
+bool SPFA(int n,int start){
+    memset(dis,63,sizeof dis),memset(vis,false,sizeof vis),memset(cnt,0,sizeof cnt);
+    queue&lt;int&gt;q;
+    q.push(start);
+    dis[start]=0;
+    vis[start]=true;
+    while(!q.empty()){
+        int u=q.front();
+        q.pop();
+        vis[u]=false;
+        for(int i=head[u];i;i=edge[i].se){
+            int v=edge[i].fi.fi,w=edge[i].fi.se;
+            if(dis[v]>dis[u]+w){
+                dis[v]=dis[u]+w;
+                cnt[v]=cnt[u]+1;
+                if(cnt[v]>=n)
+                    return false;
+                if(!vis[v]){
+                    q.push(v);
+                    vis[v]=true;
+                }
+            }
+        }
+    }
+    return true;
+}
+signed main(void) {
+    ios::sync_with_stdio(false),cin.tie(nullptr),cout.tie(nullptr);
+    cin>>T;
+    for(int n,m;T;--T){
+        cin>>n>>m;
+        for(int i=1,x,y,z;i&lt;=m;i++){
+            cin>>x>>y>>z;
+            if(z>=0){
+                Google_Chrome(x,y,z);
+                Google_Chrome(y,x,z);
+            }
+            else Google_Chrome(x,y,z);
+        }
+        (!SPFA(n,1))?puts("YES"):puts("NO");
+        tot=1;
+        memset(head,0,sizeof head);
+    }
+    exit(0);
+}</code></pre>
+        </div>
+
+        <div id="B3647" class="code-card">
+            <div class="title-row">
+                <h3>🟡 B3647 【模板】Floyd</h3>
+                <a href="https://www.luogu.com.cn/problem/B3647" target="_blank">查看原题 →</a>
+            </div>
+            <pre><code>#include &lt;bits/stdc++.h&gt;
+#define int long long
+#define INI 1000000000000000000
+using namespace std;
+int dis[1005][1005],n,m;
+signed main(void) {
+  ios::sync_with_stdio(false);
+  cin.tie(0);
+  cout.tie(0);
+  cin>>n>>m;
+  for(int i=1;i&lt;=n;i++)for(int j=1;j&lt;=n;j++)dis[i][j]=INI;
+  for(int i=1,x,y,z;i&lt;=m;i++)
+  {
+    cin>>x>>y>>z;
+    dis[x][y]=min(dis[x][y],z);
+    dis[y][x]=min(dis[y][x],z);
+  }
+  for(int k=1;k&lt;=n;k++)for(int i=1;i&lt;=n;i++)for(int j=1;j&lt;=n;j++)dis[i][j]=min(dis[i][j],dis[k][j]+dis[i][k]);
+  for(int i=1;i&lt;=n;i++)
+  {
+    for(int j=1;j&lt;=n;j++)
+    {
+      if(i==j)cout<<"0 ";
+      else cout&lt;&lt;dis[i][j]&lt;&lt;' ';
+    }
+    cout&lt;&lt;endl;
+  }
+  exit(0);
+}</code></pre>
+        </div>
+
+        <div id="P3865" class="code-card">
+            <div class="title-row">
+                <h3>🟡 P3865 【模板】ST表</h3>
+                <a href="https://www.luogu.com.cn/problem/P3865" target="_blank">查看原题 →</a>
+            </div>
+            <pre><code>#include &lt;bits/stdc++.h&gt;
+using namespace std;
+const int maxn = 1e5 + 10;
+const int maxm = log2(maxn) + 10;
+int n, q, a[maxn], st[maxn][maxm];
+namespace quick {
+    inline int read() {
+        int x = 0, f = 1; char ch = getchar();
+        while (ch &lt; '0' || ch > '9') { if (ch == '-') f = -1; ch = getchar(); }
+        while (ch >= '0' && ch &lt;= '9') { x = x * 10 + ch - '0'; ch = getchar(); }
+        return x * f;
+    }
+}
+inline void st_build() {
+    for (int i = 1; i &lt;= n; i++) st[i][0] = a[i];
+    int t = log2(n);
+    for (int j = 1; j &lt;= t; j++) 
+        for (int i = 1; i &lt;= n - (1 &lt;&lt; j) + 1; i++) 
+            st[i][j] = max(st[i][j - 1], st[i + (1 &lt;&lt; (j - 1))][j - 1]); 
+}
+inline int st_query(int l, int r) {
+    int k = log2(r - l + 1);
+    return max(st[l][k], st[r - (1 &lt;&lt; k) + 1][k]);
+}
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0); cout.tie(0);
+    n = quick::read();
+    q = quick::read();
+    for (int i = 1; i &lt;= n; i++) a[i] = quick::read();
+    st_build();
+    while (q--) {
+        int l = quick::read(), r = quick::read(); 
+        cout &lt;&lt; st_query(l, r) &lt;&lt; "\n";
+    }
+    return 0;
+}</code></pre>
+        </div>
+
+        <div id="P4779" class="code-card">
+            <div class="title-row">
+                <h3>🟡 P4779 【模板】最短路（标准版）</h3>
+                <a href="https://www.luogu.com.cn/problem/P4779" target="_blank">查看原题 →</a>
+            </div>
+            <pre><code>#include&lt;bits/stdc++.h&gt;
+const int MaxN = 100010, MaxM = 500010;
+struct edge
+{
+    int to, dis, next;
+};
+edge e[MaxM];
+int head[MaxN], dis[MaxN], cnt;
+bool vis[MaxN];
+int n, m, s;
+inline void add_edge( int u, int v, int d )
+{
+    cnt++;
+    e[cnt].dis = d;
+    e[cnt].to = v;
+    e[cnt].next = head[u];
+    head[u] = cnt;
+}
+struct node
+{
+    int dis;
+    int pos;
+    bool operator &lt;( const node &x )const
+    {
+        return x.dis &lt; dis;
+    }
+};
+std::priority_queue&lt;node&gt; q;
+inline void dijkstra()
+{
+    dis[s] = 0;
+    q.push( ( node ){0, s} );
+    while( !q.empty() )
+    {
+        node tmp = q.top();
+        q.pop();
+        int x = tmp.pos, d = tmp.dis;
+        if( vis[x] )
+            continue;
+        vis[x] = 1;
+        for( int i = head[x]; i; i = e[i].next )
+        {
+            int y = e[i].to;
+            if( dis[y] > dis[x] + e[i].dis )
+            {
+                dis[y] = dis[x] + e[i].dis;
+                if( !vis[y] )
+                {
+                    q.push( ( node ){dis[y], y} );
+                }
+            }
+        }
+    }
+}
+int main()
+{
+    scanf( "%d%d%d", &n, &m, &s );
+    for(int i = 1; i &lt;= n; ++i)dis[i] = 0x7fffffff;
+    for( register int i = 0; i &lt; m; ++i )
+    {
+        register int u, v, d;
+        scanf( "%d%d%d", &u, &v, &d );
+        add_edge( u, v, d );
+    }
+    dijkstra();
+    for( int i = 1; i &lt;= n; i++ )
+        printf( "%d ", dis[i] );
+    return 0;
+}</code></pre>
+        </div>
+
+        <!-- 绿题 -->
+        <div id="P3368" class="code-card">
+            <div class="title-row">
+                <h3>🟢 P3368 【模板】树状数组 2</h3>
+                <a href="https://www.luogu.com.cn/problem/P3368" target="_blank">查看原题 →</a>
+            </div>
+            <pre><code>#include&lt;bits/stdc++.h&gt;
+using namespace std;
+const int I=1e6+0xf;
+#define lb(x) (x) & (-x)
+#define int long long
+#define fo(i,a,b) for(int i=(a);i&lt;=(b);++i)
+int n,q;
+int a[I];
+int b[I];
+int tree[I];
+inline int read() {
+    int x = 0, f = 1;
+    char ch = getchar();
+    while (ch &lt; '0' || ch > '9') {
+        if (ch == '-') f = -1;
+        ch = getchar();
+    }
+    while (ch >= '0' && ch &lt;= '9') {
+        x = (x &lt;&lt; 1) + (x &lt;&lt; 3) + (ch ^ 48);
+        ch = getchar();
+    }
+    return x * f;
+}
+inline void write(int x) {
+    if (x &lt; 0) {
+        putchar('-');
+        x = -x;
+    }
+    if (x > 9) write(x / 10);
+    putchar(x % 10 + '0');
+}
+inline void add(int x,int y){
+    for(int i=x;i&lt;=n;i+=lb(i))tree[i]+=y;
+}
+inline int find(int x)
+{
+    int s=0;
+    for(int i=x;i;i-=lb(i)) s+=tree[i];
+    return s;
+}
+signed main(){
+    n=read();
+    q=read();
+    fo(i,1,n){
+        a[i]=read();
+        add(i,a[i]-a[i-1]);
+    }
+    fo(i,1,q){
+        int op=read();    
+        if(op==1){
+            int l=read(),r=read(),x=read();
+            add(l,x);
+            add(r+1,-x);
+        }
+        else{
+            int x=read();
+            write(find(x));
+            putchar('\n');
+        }
+    }
+}</code></pre>
+        </div>
+
+        <div id="P3374" class="code-card">
+            <div class="title-row">
+                <h3>🟢 P3374 【模板】树状数组 1</h3>
+                <a href="https://www.luogu.com.cn/problem/P3374" target="_blank">查看原题 →</a>
+            </div>
+            <pre><code>#include&lt;bits/stdc++.h&gt;
+using namespace std;
+const int I=1e6+0xf;
+#define lb(x) (x) & (-x)
+#define int long long
+#define fo(i,a,b) for(int i=(a);i&lt;=(b);++i)
+int n,q;
+int a[I];
+int b[I];
+int tree[I];
+inline int read() {
+    int x = 0, f = 1;
+    char ch = getchar();
+    while (ch &lt; '0' || ch > '9') {
+        if (ch == '-') f = -1;
+        ch = getchar();
+    }
+    while (ch >= '0' && ch &lt;= '9') {
+        x = (x &lt;&lt; 1) + (x &lt;&lt; 3) + (ch ^ 48);
+        ch = getchar();
+    }
+    return x * f;
+}
+inline void write(int x) {
+    if (x &lt; 0) {
+        putchar('-');
+        x = -x;
+    }
+    if (x > 9) write(x / 10);
+    putchar(x % 10 + '0');
+}
+inline void add(int x,int y){
+    for(int i=x;i&lt;=n;i+=lb(i))tree[i]+=y;
+}
+inline int find(int x)
+{
+    int s=0;
+    for(int i=x;i;i-=lb(i)) s+=tree[i];
+    return s;
+}
+signed main(){
+    n=read();
+    q=read();
+    fo(i,1,n){
+        a[i]=read();
+        add(i,a[i]);
+    }
+    fo(i,1,q){
+        int op=read();    
+        if(op==1){
+            int x=read(),k=read();
+            add(x,k);
+        }
+        else{
+            int l=read(),r=read();
+            write(find(r)-find(l-1));
+            putchar('\n');
+        }
+    }
+}</code></pre>
+        </div>
+
+        <div id="P3375" class="code-card">
+            <div class="title-row">
+                <h3>🟢 P3375 【模板】KMP</h3>
+                <a href="https://www.luogu.com.cn/problem/P3375" target="_blank">查看原题 →</a>
+            </div>
+            <pre><code>#include&lt;bits/stdc++.h&gt;
+using namespace std;
+using ll=long long;
+const ll N=2000005;
+int nxt[N];
+signed main(){
+    ios_base::sync_with_stdio(false),cin.tie(nullptr),cout.tie(nullptr);
+    string s1,s2;
+    cin>>s1>>s2;
+    ll len1=s1.size(),len2=s2.size();
+    s1=" "+s1,s2=" "+s2;
+    for(ll i=2,j=0;i&lt;=len2;++i){
+        while(j and s2[i]!=s2[j+1])j=nxt[j];
+        if(s2[j+1]==s2[i])j++;
+        nxt[i]=j;
+    }
+    for(ll i=1,j=0;i&lt;=len1;++i){
+        while(j and s1[i]!=s2[j+1])j=nxt[j];
+        if(s2[j+1]==s1[i])j++;
+        if(j==len2)printf("%lld\n",i-j+1);
+    }
+    for(ll i=1;i&lt;=len2;++i)printf("%lld ",nxt[i]);
+    return 0;
+}</code></pre>
+        </div>
+
+        <div id="P3390" class="code-card">
+            <div class="title-row">
+                <h3>🟢 P3390 【模板】矩阵快速幂</h3>
+                <a href="https://www.luogu.com.cn/problem/P3390" target="_blank">查看原题 →</a>
+            </div>
+            <pre><code>#include&lt;bits/stdc++.h&gt;
+using namespace std;
+using ll=long long;
+const ll mod=1e9+7;
+const ll N=105;
+ll n,k;
+struct matrix{ll f[N][N];};
+matrix operator *(const matrix&a,const matrix&b){
+    matrix c;
+    memset(c.f,0,sizeof c.f);
+    for(int i=0;i&lt;n;++i){
+        for(int j=0;j&lt;n;++j){
+            for(int k=0;k&lt;n;++k){
+                c.f[i][j]=(c.f[i][j]+a.f[i][k]*b.f[k][j]%mod)%mod;
+            }
+        }
+    }
+    return c;
+}
+signed main(void){
+    scanf("%lld%lld",&n,&k);
+    matrix ans,a;
+    for(int i=0;i&lt;n;++i)
+        for(int j=0;j&lt;n;++j)
+            cin>>a.f[i][j];
+    for(int i=0;i&lt;n;++i)ans.f[i][i]=1;
+    while(k){
+        if(k&1)ans=ans*a;
+        a=a*a;
+        k>>=1;
+    }
+    for(int i=0;i&lt;n;++i){
+        for(int j=0;j&lt;n;++j)
+            cout&lt;&lt;ans.f[i][j]&lt;&lt;' ';
+        cout&lt;&lt;endl;
+    }
+    return 0;
+}</code></pre>
+        </div>
+
+        <div id="P5960" class="code-card">
+            <div class="title-row">
+                <h3>🟢 P5960 【模板】差分约束</h3>
+                <a href="https://www.luogu.com.cn/problem/P5960" target="_blank">查看原题 →</a>
+            </div>
+            <pre><code>#include&lt;iostream&gt;
+#include&lt;queue&gt;
+#include&lt;cstring&gt;
+#include&lt;vector&gt;
+using namespace std;
+struct node{
+    int v,w;
+};
+int n,m,d[50000],cnt[50000];
+bool in[50000];
+vector&lt;node&gt; g[50000];
+queue&lt;int&gt;q;
+bool SPFA(){
+    memset(d,0x7f,sizeof(d));
+    d[0]=0;
+    in[0]=true;
+    q.push(0);
+    cnt[0]++;
+    while(!q.empty()){
+        int u=q.front();
+        q.pop();
+        in[u]=false;
+        for(auto i:g[u]){
+            int v=i.v,w=i.w;
+            if(d[v]>d[u]+w){
+                d[v]=d[u]+w;
+                if(!in[v]){
+                    cnt[v]++;
+                    in[v]=true;
+                    q.push(v);
+                    if(cnt[v]==n)return false;
+                }
+            }
+        }
+    }
+    return true;
+}
+signed main(){
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    cin>>n>>m;
+    int u,v,w;
+    for(int i=1;i&lt;=m;i++){
+        cin>>u>>v>>w;
+        g[v].push_back((node){u,w});
+    }
+    for(int i=1;i&lt;=n;i++)g[0].push_back((node){i,0});
+    if(SPFA())for(int i=1;i&lt;=n;i++)cout&lt;&lt;d[i]&lt;&lt;' ';
+    else cout<<"NO";
+}</code></pre>
+        </div>
+
+        <!-- 蓝题 -->
+        <div id="P3369" class="code-card">
+            <div class="title-row">
+                <h3>🔵 P3369 【模板】普通平衡树</h3>
+                <a href="https://www.luogu.com.cn/problem/P3369" target="_blank">查看原题 →</a>
+            </div>
+            <pre><code>#include&lt;bits/stdc++.h&gt;
+using namespace std;
+using ll=long long;
+const ll N=5e5+0xf;
+ll n, root,cnt;
+struct Node{
+    ll left,right,size,count,priority,val;
+}tree[N];
+namespace Treap{
+    inline ll get_size(ll x){return x?tree[x].size:0;}
+    inline void update(ll x){tree[x].size=get_size(tree[x].left)+get_size(tree[x].right)+tree[x].count;}
+    inline void zig(ll&x){
+        ll y=tree[x].left;
+        tree[x].left=tree[y].right,tree[y].right=x;
+        update(x),update(y);
+        x=y;
+    }
+    inline void zag(ll&y){
+        ll x=tree[y].right;
+        tree[y].right=tree[x].left,tree[x].left=y;
+        update(y),update(x);
+        y=x;
+    }
+    inline ll create(ll val){
+        ++cnt,tree[cnt].left=tree[cnt].right=0,tree[cnt].count=tree[cnt].size=1,tree[cnt].val=val,tree[cnt].priority=rand();
+        return cnt;
+    }
+    inline void insert(ll&x,ll val){
+        if(!x){x=create(val);return;}
+        if(val==tree[x].val)tree[x].count++;
+        else if(val&lt;tree[x].val){
+            insert(tree[x].left,val);
+            if(tree[tree[x].left].priority>tree[x].priority)zig(x);
+        }
+        else{
+            insert(tree[x].right,val);
+            if(tree[tree[x].right].priority>tree[x].priority)zag(x);
+        }
+        update(x);
+    }
+    inline void Delete(ll&x,ll val){
+        if(!x)return;
+        if(val==tree[x].val){
+            if(tree[x].count>1){tree[x].count--,update(x);return;}
+            if(!tree[x].left&&!tree[x].right){x=0;return;}
+            if(!tree[x].left||!tree[x].right){x=tree[x].left?tree[x].left:tree[x].right;return;}
+            if(tree[tree[x].left].priority>tree[tree[x].right].priority)zig(x),Delete(tree[x].right,val);
+            else zag(x),Delete(tree[x].left,val);
+        }
+        else if(val&lt;tree[x].val)Delete(tree[x].left,val);
+        else Delete(tree[x].right,val);
+        if(x)update(x);
+    }
+    inline ll Rank(ll x,ll val){
+        if(!x)return 1;
+        if(val&lt;=tree[x].val)return Rank(tree[x].left,val);
+        return get_size(tree[x].left)+tree[x].count+Rank(tree[x].right,val);
+    }
+    inline ll find_pre(ll x,ll val){
+        if(!x)return INT_MIN;
+        if(tree[x].val>=val)return find_pre(tree[x].left,val);
+        return max(tree[x].val,find_pre(tree[x].right,val));
+    }
+    inline ll find_suf(ll x,ll val){
+        if(!x)return INT_MAX;
+        if(tree[x].val&lt;=val)return find_suf(tree[x].right,val);
+        return min(tree[x].val,find_suf(tree[x].left,val));
+    }
+    inline ll find_kth(ll x,ll k){
+        if(!x)return 0;
+        ll Lsize=get_size(tree[x].left);
+        if(k&lt;=Lsize)return find_kth(tree[x].left,k);
+        else if(k&lt;=Lsize+tree[x].count)return tree[x].val;
+        else return find_kth(tree[x].right,k-Lsize-tree[x].count);
+    }
+}
+using namespace Treap;
+signed main(void){
+    srand(time(0));
+    scanf("%lld",&n);
+    for(ll op,x;n--;){
+        scanf("%lld%lld",&op,&x);
+        if(op==1)insert(root,x);
+        if(op==2)Delete(root,x);
+        if(op==3)printf("%lld\n",Rank(root,x));
+        if(op==4)printf("%lld\n",find_kth(root,x));
+        if(op==5)printf("%lld\n",find_pre(root,x));
+        if(op==6)printf("%lld\n",find_suf(root,x));
+    }
+}</code></pre>
+        </div>
+
+        <div id="P3376" class="code-card">
+            <div class="title-row">
+                <h3>🔵 P3376 【模板】网络最大流</h3>
+                <a href="https://www.luogu.com.cn/problem/P3376" target="_blank">查看原题 →</a>
+            </div>
+            <pre><code>#include&lt;bits/stdc++.h&gt;
+using namespace std;
+using ll=long long;
+const ll N=20005;
+struct Node{
+    ll v,w,nxt;
+}E[N&lt;&lt;1];
+ll head[N],res[N],flow[N],pre[N];
+ll n,m,s,t,tot;
+inline void Add(ll u,ll v,ll w){
+    E[tot].v=v,E[tot].w=w,E[tot].nxt=head[u],head[u]=tot++;
+    E[tot].v=u,E[tot].w=0,E[tot].nxt=head[v],head[v]=tot++;
+}
+queue&lt;ll&gt;q;
+inline bool bfs(){
+    memset(res,0,sizeof res);
+    while(!q.empty())q.pop();
+    res[s]=LLONG_MAX;
+    q.push(s);
+    while(!q.empty()){
+        ll u=q.front();
+        q.pop();
+        for(ll i=head[u];i!=-1;i=E[i].nxt){
+            ll v=E[i].v,w=E[i].w;
+            if(!res[v] and w-flow[i]>0){
+                q.push(v);
+                pre[v]=i;
+                res[v]=min(res[u],w-flow[i]);
+                if(v==t)return true;
+            }
+        }
+    }
+    return false;
+}
+inline ll EK(){
+    long long ans=0;
+    while(bfs()){
+        ll v=t;
+        while(v!=s){
+            ll i=pre[v];
+            flow[i]+=res[t];
+            flow[i^1]-=res[t]; 
+            v=E[i^1].v;
+        }
+        ans+=res[t];
+    }   
+    return ans;
+}
+signed main(){
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    memset(head,-1,sizeof head);
+    cin>>n>>m>>s>>t;
+    for(ll i=1,u,v,w;i&lt;=m;++i){
+        cin>>u>>v>>w;
+        Add(u,v,w);
+    }
+    cout&lt;&lt;EK()&lt;&lt;'\n';
+    return 0;
+}</code></pre>
+        </div>
+
+        <div id="P3381" class="code-card">
+            <div class="title-row">
+                <h3>🔵 P3381 【模板】最小费用最大流</h3>
+                <a href="https://www.luogu.com.cn/problem/P3381" target="_blank">查看原题 →</a>
+            </div>
+            <pre><code>#include&lt;bits/stdc++.h&gt;
+using namespace std;
+#define ct const int 
+ct N=5e3+7;
+ct M=5e4+7;
+struct Node{
+    int v,nxt,flow,w;
+}E[M&lt;&lt;1];
+int head[N];
+int incf[N],dis[N],in_q[N],pre[N];
+int n,m,s,t;
+int tot;
+inline void ADD(ct u,ct v,ct w,ct c){
+    E[tot]={v,head[u],w,c};
+    head[u]=tot++;
+    E[tot]={u,head[v],0,-c};
+    head[v]=tot++;
+}
+queue&lt;int&gt;q;
+inline bool SPFA_is_die(){
+    while(!q.empty())q.pop();
+    memset(dis,0x3f,sizeof dis );
+    memset(incf,0,sizeof incf);
+    q.push(s);
+    dis[s]=0;
+    incf[s]=1145141919;
+    in_q[s]=true;
+    while(!q.empty()){
+        int u=q.front();
+        q.pop();
+        in_q[u]=false;
+        for(int i=head[u];i!=-1;i=E[i].nxt){
+            int v=E[i].v;
+            if(E[i].flow>0 and dis[v]>dis[u]+E[i].w){
+                dis[v]=dis[u]+E[i].w;
+                pre[v]=i;
+                incf[v]=min(incf[u],E[i].flow);
+                if(!in_q[v]){
+                    q.push(v);
+                    in_q[v]=true;
+                }
+            }
+        }
+    }
+    return incf[t]>0;
+}
+inline void EK(int&flow,int&cost){
+    flow=cost=0;
+    while(SPFA_is_die()){
+        int x=incf[t];
+        flow+=x;
+        cost+=x*dis[t];
+        for(int i=t;i!=s;i=E[pre[i]^1].v){
+            E[pre[i]].flow-=x;
+            E[pre[i]^1].flow+=x;
+        }
+    }
+}
+signed main(){
+    memset(head,-1,sizeof head);
+    scanf("%d%d%d%d",&n,&m,&s,&t);
+    for(int i=1,u,v,w,c;i&lt;=m;++i){
+        scanf("%d%d%d%d",&u,&v,&w,&c);
+        ADD(u,v,w,c);
+    }
+    int flow,cost;
+    EK(flow,cost);
+    printf("%d %d\n",flow,cost);
+    return 0;
+}</code></pre>
+        </div>
+
+        <div id="P3391" class="code-card">
+            <div class="title-row">
+                <h3>🔵 P3391 【模板】文艺平衡树</h3>
+                <a href="https://www.luogu.com.cn/problem/P3391" target="_blank">查看原题 →</a>
+            </div>
+            <pre><code>#include&lt;bits/stdc++.h&gt;
+using namespace std;
+const int N=2e5+0xf;
+int root,cnt;
+struct Node{
+    int left,right,size,priority,val,rev;
+}tree[N&lt;&lt;1];
+namespace Treap{
+    inline int get_size(int x){
+        return x?tree[x].size:0;
+    }
+    inline void update(int x){
+        tree[x].size=get_size(tree[x].left)+get_size(tree[x].right)+1;
+    }
+    inline int new_node(int val){
+        tree[++::cnt].left=tree[::cnt].right=tree[::cnt].rev=0;
+        tree[::cnt].val=val;
+        tree[::cnt].priority=rand();
+        tree[::cnt].size=1;
+        return cnt;
+    }
+    inline int build(int l,int r){
+        if(l>r)return 0;
+        int mid=(l+r)>>1;
+        int x=new_node(mid);
+        tree[x].left=build(l,mid-1);
+        tree[x].right=build(mid+1,r);
+        update(x);
+        return x;
+    }
+    inline void push_down(int x){
+        if(tree[x].rev){
+            swap(tree[x].left,tree[x].right);
+            if(tree[x].left)tree[tree[x].left].rev^=1;
+            if(tree[x].right)tree[tree[x].right].rev^=1;
+            tree[x].rev=0;
+        }
+    }
+    inline void split(int x,int k,int&a,int&b){
+        if(!x){
+            a=b=0;
+            return;
+        }
+        push_down(x);
+        if(get_size(tree[x].left)&lt;k){
+            a=x;
+            split(tree[x].right,k-get_size(tree[x].left)-1,tree[a].right,b);
+            update(a);
+        }
+        else{
+            b=x;
+            split(tree[x].left,k,a,tree[b].left);
+            update(b);
+        }
+    }
+    inline int merge(int a,int b){
+        if(!a)return b;
+        if(!b)return a;
+        if(tree[a].priority>tree[b].priority){
+            push_down(a);
+            tree[a].right=merge(tree[a].right,b);
+            update(a);
+            return a;
+        }
+        else{
+            push_down(b);
+            tree[b].left=merge(a,tree[b].left);
+            update(b);
+            return b;
+        }
+    }
+    inline void reverse(int l,int r){
+        int x,y,z;
+        split(::root,r,x,z);
+        split(x,l-1,x,y);
+        if(y)tree[y].rev^=1;
+        root=merge(merge(x,y),z);
+    }
+    inline void Preorder_traversal(int root){
+        if(!root)return;
+        push_down(root);
+        Preorder_traversal(tree[root].left);
+        printf("%d ",tree[root].val);
+        Preorder_traversal(tree[root].right);
+    }
+}
+using namespace Treap;
+signed main(){
+    srand(time(0));
+    int n,m;
+    cin>>n>>m;
+    root=build(1,n);
+    for(int i=1;i&lt;=m;++i){
+        int l,r;
+        cin>>l>>r;
+        reverse(l,r);
+    }
+    Preorder_traversal(root);
+    return 0;
+}</code></pre>
+        </div>
+
+        <div id="P3805" class="code-card">
+            <div class="title-row">
+                <h3>🔵 P3805 【模板】Manacher</h3>
+                <a href="https://www.luogu.com.cn/problem/P3805" target="_blank">查看原题 →</a>
+            </div>
+            <pre><code>#include&lt;bits/stdc++.h&gt;
+using namespace std;
+string a;
+char s[22000010];
+int len,k,ans,d[22000010];
+void getd(){
+    d[1]=1;
+    for(int i=2,l,r=1;i&lt;=len;i++){
+        if(i&lt;=r) d[i]=min(d[(l+r)-i],r-i+1);
+        while(s[i-d[i]]==s[i+d[i]]) d[i]++;
+        if(i+d[i]-1>r) l=i-d[i]+1,r=i+d[i]-1;
+    }
+}
+int main(){
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cin>>a;
+    len=a.size(),k=0;
+    s[0]='$',s[++k]='#';
+    for(int i=0;i&lt;len;i++){
+        s[++k]=a[i];
+        s[++k]='#';
+    }
+    len=k;
+    getd();
+    for(int i=1;i&lt;=len;i++)
+        ans=max(ans,d[i]-1);
+    cout&lt;&lt;ans;
+    return 0;
+}</code></pre>
+        </div>
+
+        <div id="P5410" class="code-card">
+            <div class="title-row">
+                <h3>🔵 P5410 【模板】exKMP</h3>
+                <a href="https://www.luogu.com.cn/problem/P5410" target="_blank">查看原题 →</a>
+            </div>
+            <pre><code>#include &lt;cstdio&gt;
+#include &lt;cstring&gt;
+#include &lt;iostream&gt;
+using namespace std;
+char t[20000007], s[40000007];
+int z_s[40000007];
+void exkmp(char* s, int* z) {
+    z[0] = strlen(s); int l = 0, r = 0;
+    for (int i = 1; s[i] != '\0'; i++){
+        z[i] = 0;
+        if (i &lt; r) {
+            if (z[i - l] &lt; r - i + 1) z[i] = z[i - l];
+            else {
+                z[i] = r - i + 1;
+                while (s[z[i]] == s[i + z[i]]) z[i]++;
+            }
+        }
+        else while (s[z[i]] == s[i + z[i]]) z[i]++;
+        if (i + z[i] - 1 > r) l = i, r = i + z[i] - 1;
+    }
+}
+int main() {
+    cin.tie(0) -> sync_with_stdio(false); cin >> t >> s;
+    int len_p = strlen(s); s[len_p] = '#'; s[++len_p] = '\0';
+    strcat(s, t);
+    exkmp(s, z_s);
+    z_s[0] = len_p - 1;
+    long long ans1 = 0, ans2 = 0;
+    for (int i = 0; i &lt; len_p - 1; i++) ans1 ^= ((long long)(i + 1) * (z_s[i] + 1));
+    for (int i = 0; s[i + len_p] != '\0'; i++) ans2 ^= ((long long)(i + 1) * (z_s[i + len_p] + 1));
+    printf("%lld\n%lld\n", ans1, ans2);
+}</code></pre>
+        </div>
+
+        <div id="P6136" class="code-card">
+            <div class="title-row">
+                <h3>🔵 P6136 【模板】平衡树（加强版）</h3>
+                <a href="https://www.luogu.com.cn/problem/P6136" target="_blank">查看原题 →</a>
+            </div>
+            <pre><code>#include&lt;bits/stdc++.h&gt;
+using namespace std;
+const int N=1500005;
+struct N{
+    int v,h,s,l,r;
+}tr[N];
+int n,m,rt,ct,ls,as;
+
+int gh(int x){return x?tr[x].h:0;}
+int gs(int x){return x?tr[x].s:0;}
+void up(int x){
+    tr[x].h=max(gh(tr[x].l),gh(tr[x].r))+1;
+    tr[x].s=gs(tr[x].l)+gs(tr[x].r)+1;
+}
+int nw(int x){
+    tr[++ct].v=x;tr[ct].h=1;tr[ct].s=1;tr[ct].l=tr[ct].r=0;
+    return ct;
+}
+int bf(int x){return gh(tr[x].l)-gh(tr[x].r);}
+int rr(int y){
+    int x=tr[y].l,b=tr[x].r;
+    tr[x].r=y;tr[y].l=b;up(y);up(x);
+    return x;
+}
+int lr(int x){
+    int y=tr[x].r,b=tr[y].l;
+    tr[y].l=x;tr[x].r=b;up(x);up(y);
+    return y;
+}
+int bal(int x){
+    up(x);
+    if(bf(x)==2){
+        if(bf(tr[x].l)==-1)tr[x].l=lr(tr[x].l);
+        return rr(x);
+    }
+    if(bf(x)==-2){
+        if(bf(tr[x].r)==1)tr[x].r=rr(tr[x].r);
+        return lr(x);
+    }
+    return x;
+}
+int ins(int x,int va){
+    if(!x)return nw(va);
+    if(va&lt;tr[x].v)tr[x].l=ins(tr[x].l,va);
+    else tr[x].r=ins(tr[x].r,va);
+    return bal(x);
+}
+int fdm(int x){
+    while(tr[x].l)x=tr[x].l;
+    return x;
+}
+int delm(int x){
+    if(!tr[x].l)return tr[x].r;
+    tr[x].l=delm(tr[x].l);
+    return bal(x);
+}
+int del(int x,int va){
+    if(!x)return 0;
+    if(va&lt;tr[x].v)tr[x].l=del(tr[x].l,va);
+    else if(va>tr[x].v)tr[x].r=del(tr[x].r,va);
+    else{
+        if(!tr[x].l||!tr[x].r)return tr[x].l?tr[x].l:tr[x].r;
+        int m=fdm(tr[x].r);
+        tr[x].v=tr[m].v;tr[x].r=delm(tr[x].r);
+    }
+    return bal(x);
+}
+int rnk(int x,int va){
+    if(!x)return 1;
+    if(va&lt;=tr[x].v)return rnk(tr[x].l,va);
+    return gs(tr[x].l)+1+rnk(tr[x].r,va);
+}
+int kth(int x,int k){
+    int ls=gs(tr[x].l);
+    if(k==ls+1)return tr[x].v;
+    if(k&lt;=ls)return kth(tr[x].l,k);
+    return kth(tr[x].r,k-ls-1);
+}
+int pre(int x,int va){
+    if(!x)return -2e9;
+    if(tr[x].v>=va)return pre(tr[x].l,va);
+    return max(tr[x].v,pre(tr[x].r,va));
+}
+int nxt(int x,int va){
+    if(!x)return 2e9;
+    if(tr[x].v&lt;=va)return nxt(tr[x].r,va);
+    return min(tr[x].v,nxt(tr[x].l,va));
+}
+
+int main(){
+    scanf("%d%d",&n,&m);
+    rt=ct=ls=as=0;
+    for(int i=1,x;i&lt;=n;i++){
+        scanf("%d",&x);
+        rt=ins(rt,x);
+    }
+    for(int i=1,op,x;i&lt;=m;i++){
+        scanf("%d%d",&op,&x);
+        x^=ls;
+        if(op==1)rt=ins(rt,x);
+        else if(op==2)rt=del(rt,x);
+        else if(op==3)ls=rnk(rt,x),as^=ls;
+        else if(op==4)ls=kth(rt,x),as^=ls;
+        else if(op==5)ls=pre(rt,x),as^=ls;
+        else ls=nxt(rt,x),as^=ls;
+    }
+    printf("%d\n",as);
+    return 0;
+}</code></pre>
+        </div>
+
+        <!-- 紫题 -->
+        <div id="P6192" class="code-card">
+            <div class="title-row">
+                <h3>🟣 P6192 【模板】最小斯坦纳树</h3>
+                <a href="https://www.luogu.com.cn/problem/P6192" target="_blank">查看原题 →</a>
+            </div>
+            <pre><code>#include&lt;bits/stdc++.h&gt;
+using namespace std;
+vector&lt;pair&lt;int,int&gt;&gt;E[105];
+priority_queue&lt;pair&lt;int,int&gt;,vector&lt;pair&lt;int,int&gt;&gt;,greater&lt;pair&lt;int,int&gt;&gt;&gt;q;
+int dp[107][(1&lt;&lt;10)+5];
+inline void dijkstra(int mask){
+    while(!q.empty()){
+        auto u=q.top().second;
+        q.pop();
+        for(auto x:E[u]){
+            int v=x.first,w=x.second;
+            if(dp[v][mask]>dp[u][mask]+w){
+                dp[v][mask]=dp[u][mask]+w;
+                q.push({dp[v][mask],v});
+            }
+        }
+    }
+}
+int main(){
+    int n,m,k;
+    scanf("%d%d%d",&n,&m,&k);
+    for(int u,v,w;m;--m){
+        scanf("%d%d%d",&u,&v,&w);
+        E[u].push_back({v,w});
+        E[v].push_back({u,w});
+    }
+    memset(dp,0x3f,sizeof dp);
+    for(int i=1,x;i&lt;=k;++i){
+        scanf("%d",&x);
+        dp[x][1&lt;&lt;(i-1)]=0;
+    }
+    for(int mask=0;mask&lt;(1&lt;&lt;k);mask++){
+        for(int i=1;i&lt;=n;++i){
+            for(int sub=mask;sub;sub=(sub-1)&mask)
+                dp[i][mask]=min(dp[i][mask],dp[i][sub]+dp[i][mask^sub]);
+            if(dp[i][mask]&lt;0x3f3f3f3f)q.push({dp[i][mask],i});
+        }
+        dijkstra(mask);
+    }
+    int ans=INT_MAX;
+    for(int i=1;i&lt;=n;++i)
+        ans=min(ans,dp[i][(1&lt;&lt;k)-1]);
+    printf("%d\n",ans);
+}</code></pre>
+        </div>
+
+        <!-- 回到顶部 -->
+        <div style="text-align: center; margin-top: 20px;">
+            <a href="#top" style="color: #a8b2ff; text-decoration: none; font-size: 14px; padding: 8px 24px; border-radius: 50px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.06);">⬆ 回到顶部</a>
+        </div>
+
+        <div class="footer">
+            © 2026 <a href="https://Chaison2026.github.io" target="_blank">Chaison</a> · 算法模板题集
+        </div>
+
     </div>
 
 </body>
