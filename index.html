@@ -25,8 +25,6 @@
             padding: 20px;
         }
 
-        /* 移除了 .card 样式，所有内容直接在 body 中布局 */
-
         /* 头像 */
         .avatar {
             width: 120px;
@@ -124,7 +122,7 @@
             text-decoration: underline;
         }
 
-        /* ========== 邮箱弹窗样式（未改动） ========== */
+        /* ========== 邮箱弹窗样式 ========== */
         .modal {
             display: none;
             position: fixed;
@@ -146,13 +144,57 @@
             border-radius: 24px;
             text-align: center;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-            max-width: 380px;
+            max-width: 420px;
             width: 90%;
             position: relative;
             animation: slideUp 0.3s ease;
             border: 1px solid rgba(255, 255, 255, 0.06);
         }
 
+        .modal-content .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #f0f0f5;
+            margin-bottom: 16px;
+        }
+
+        .modal-content .team-link {
+            display: block;
+            padding: 10px 16px;
+            margin-bottom: 10px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.06);
+            color: #c8c8d4;
+            text-decoration: none;
+            font-size: 15px;
+            transition: all 0.2s ease;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .modal-content .team-link:hover {
+            background: rgba(102, 126, 234, 0.25);
+            color: #fff;
+            border-color: rgba(102, 126, 234, 0.3);
+            transform: scale(1.02);
+        }
+
+        .modal-content .close-btn {
+            position: absolute;
+            top: 14px;
+            right: 20px;
+            font-size: 28px;
+            font-weight: 300;
+            cursor: pointer;
+            color: rgba(255, 255, 255, 0.4);
+            transition: color 0.2s;
+            line-height: 1;
+        }
+
+        .modal-content .close-btn:hover {
+            color: #fff;
+        }
+
+        /* 邮箱弹窗内的按钮和文字样式 */
         .modal-content .email-icon {
             font-size: 48px;
             margin-bottom: 6px;
@@ -193,22 +235,7 @@
             transform: scale(0.96);
         }
 
-        .close-btn {
-            position: absolute;
-            top: 14px;
-            right: 20px;
-            font-size: 28px;
-            font-weight: 300;
-            cursor: pointer;
-            color: rgba(255, 255, 255, 0.4);
-            transition: color 0.2s;
-            line-height: 1;
-        }
-
-        .close-btn:hover {
-            color: #fff;
-        }
-
+        /* 弹窗动画 */
         @keyframes fadeIn {
             from {
                 opacity: 0;
@@ -248,11 +275,17 @@
             }
 
             .modal-content {
-                padding: 30px 24px 32px;
+                padding: 30px 20px 28px;
+                max-width: 95%;
             }
 
-            .modal-content .email-address {
-                font-size: 17px;
+            .modal-content .modal-title {
+                font-size: 16px;
+            }
+
+            .modal-content .team-link {
+                font-size: 14px;
+                padding: 8px 14px;
             }
         }
     </style>
@@ -281,7 +314,8 @@
         <a href="https://www.luogu.com.cn/user/1836843" target="_blank">📝 洛谷</a>
         <a href="https://atcoder.jp/users/Chen_Zhen_DY" target="_blank">⚡ AtCoder</a>
         <a href="https://vjudge.net/user/Chaison" target="_blank">🧩 VJ</a>
-        <!-- 新增：指向 Code 子页面的内部链接 -->
+        <!-- 新增：洛谷团队弹窗按钮 -->
+        <a href="#" onclick="openTeamModal(); return false;">📚 洛谷团队</a>
         <a href="/Code/" target="_blank">模板题 Code</a>
     </div>
 
@@ -301,8 +335,21 @@
         </div>
     </div>
 
+    <!-- ========== 洛谷团队弹窗 ========== -->
+    <div id="teamModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeTeamModal()">&times;</span>
+            <div class="modal-title">📚 我加入的洛谷团队</div>
+            <a href="https://www.luogu.com.cn/team/102430" target="_blank" class="team-link">纪中114514</a>
+            <a href="https://www.luogu.com.cn/team/94586" target="_blank" class="team-link">ZENOJ 洛谷分部</a>
+            <a href="https://www.luogu.com.cn/team/85136" target="_blank" class="team-link">你今天AC了吗</a>
+            <a href="https://www.luogu.com.cn/team/123034" target="_blank" class="team-link">mioLanguage</a>
+        </div>
+    </div>
+
     <!-- ========== JavaScript ========== -->
     <script>
+        // --- 邮箱弹窗逻辑 ---
         function openEmailModal() {
             document.getElementById('emailModal').style.display = 'flex';
             document.body.style.overflow = 'hidden';
@@ -316,7 +363,7 @@
         function copyEmail() {
             const email = 'chen_zhen2026@126.com';
             navigator.clipboard.writeText(email).then(() => {
-                const modalContent = document.querySelector('.modal-content');
+                const modalContent = document.querySelector('#emailModal .modal-content');
                 modalContent.innerHTML = `
                     <div style="padding: 20px 0;">
                         <div style="font-size: 56px; margin-bottom: 10px;">✅</div>
@@ -325,23 +372,45 @@
                         <button class="copy-btn" onclick="closeEmailModal()" style="background: linear-gradient(135deg, #667eea, #764ba2); padding: 10px 32px; color: white; border: none; border-radius: 50px; font-size: 16px; cursor: pointer;">我知道了</button>
                     </div>
                 `;
-                const closeBtn = document.querySelector('.close-btn');
+                const closeBtn = document.querySelector('#emailModal .close-btn');
                 if (closeBtn) closeBtn.style.display = 'none';
             }).catch(() => {
                 alert('复制失败，请手动复制：chen_zhen2026@126.com');
             });
         }
 
+        // --- 洛谷团队弹窗逻辑 ---
+        function openTeamModal() {
+            document.getElementById('teamModal').style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeTeamModal() {
+            document.getElementById('teamModal').style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        // --- 全局点击背景关闭弹窗 ---
         window.onclick = function (event) {
-            var modal = document.getElementById('emailModal');
-            if (event.target == modal) {
+            const emailModal = document.getElementById('emailModal');
+            const teamModal = document.getElementById('teamModal');
+            if (event.target == emailModal) {
                 closeEmailModal();
+            }
+            if (event.target == teamModal) {
+                closeTeamModal();
             }
         }
 
+        // --- 按 ESC 键关闭所有弹窗 ---
         document.addEventListener('keydown', function (event) {
             if (event.key === 'Escape') {
-                closeEmailModal();
+                if (document.getElementById('emailModal').style.display === 'flex') {
+                    closeEmailModal();
+                }
+                if (document.getElementById('teamModal').style.display === 'flex') {
+                    closeTeamModal();
+                }
             }
         });
     </script>
