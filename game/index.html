@@ -1,1 +1,851 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
 
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>扫雷 - Chaison</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(25, 25, 35, 0.88);
+            backdrop-filter: blur(8px);
+            border-radius: 28px;
+            padding: 28px 30px 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            max-width: 820px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            color: #f0f0f5;
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            margin-bottom: 4px;
+        }
+
+        .subtitle {
+            color: rgba(255, 255, 255, 0.35);
+            font-size: 13px;
+            margin-bottom: 16px;
+        }
+
+        /* ---- 模式选择 ---- */
+        .mode-bar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .mode-btn {
+            padding: 8px 18px;
+            border-radius: 50px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #c8c8d4;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .mode-btn:hover {
+            background: rgba(255, 255, 255, 0.12);
+            color: #fff;
+            transform: scale(1.02);
+        }
+
+        .mode-btn.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+            border-color: transparent;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        /* ---- 状态栏 ---- */
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 14px;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #c8c8d4;
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        .status-item .num {
+            color: #f0f0f5;
+            font-weight: 700;
+            font-size: 18px;
+            min-width: 28px;
+            text-align: center;
+        }
+
+        .status-item .num.mines {
+            color: #ff6b6b;
+        }
+
+        .btn-reset {
+            padding: 6px 24px;
+            border-radius: 50px;
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #e0e0ea;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            line-height: 1.4;
+        }
+
+        .btn-reset:hover {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+            border-color: transparent;
+            transform: scale(1.05);
+        }
+
+        /* ---- 游戏网格 ---- */
+        .board-wrapper {
+            overflow: auto;
+            padding: 4px 0;
+            display: flex;
+            justify-content: center;
+        }
+
+        .board {
+            display: inline-grid;
+            gap: 2px;
+            background: rgba(255, 255, 255, 0.04);
+            padding: 6px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            user-select: none;
+        }
+
+        .cell {
+            width: 40px;
+            height: 40px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.10);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 17px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.15s, transform 0.1s;
+            color: #f0f0f5;
+            position: relative;
+        }
+
+        .cell:hover:not(.revealed):not(.game-over) {
+            background: rgba(255, 255, 255, 0.20);
+            transform: scale(1.02);
+        }
+
+        .cell.revealed {
+            background: rgba(255, 255, 255, 0.05);
+            cursor: default;
+            border-color: rgba(255, 255, 255, 0.03);
+            transform: none;
+        }
+
+        .cell.revealed:hover {
+            background: rgba(255, 255, 255, 0.05);
+            transform: none;
+        }
+
+        .cell.flagged {
+            background: rgba(255, 215, 0, 0.12);
+            border-color: rgba(255, 215, 0, 0.25);
+        }
+
+        .cell.mine-exploded {
+            background: rgba(255, 50, 50, 0.40);
+            border-color: #ff3333;
+        }
+
+        .cell.mine-shown {
+            background: rgba(255, 100, 100, 0.15);
+            border-color: rgba(255, 100, 100, 0.20);
+        }
+
+        /* 数字颜色 */
+        .cell.n1 {
+            color: #4a8cff;
+        }
+
+        .cell.n2 {
+            color: #34c759;
+        }
+
+        .cell.n3 {
+            color: #ff6b6b;
+        }
+
+        .cell.n4 {
+            color: #6c5ce7;
+        }
+
+        .cell.n5 {
+            color: #e74c4c;
+        }
+
+        .cell.n6 {
+            color: #1abc9c;
+        }
+
+        .cell.n7 {
+            color: #2d3436;
+        }
+
+        .cell.n8 {
+            color: #636e72;
+        }
+
+        .cell .emoji {
+            font-size: 22px;
+            line-height: 1;
+        }
+
+        /* ---- 消息 ---- */
+        .message {
+            margin-top: 14px;
+            font-size: 16px;
+            font-weight: 500;
+            min-height: 32px;
+            color: #c8c8d4;
+        }
+
+        .message.win {
+            color: #66d9a0;
+        }
+
+        .message.lose {
+            color: #ff6b6b;
+        }
+
+        /* ---- 底部 ---- */
+        .footer {
+            margin-top: 18px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.25);
+        }
+
+        .footer a {
+            color: rgba(255, 255, 255, 0.4);
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            color: #a8b2ff;
+        }
+
+        /* ---- 响应式 ---- */
+        @media (max-width: 600px) {
+            .container {
+                padding: 16px 12px;
+                border-radius: 20px;
+            }
+
+            h1 {
+                font-size: 22px;
+            }
+
+            .mode-btn {
+                padding: 6px 14px;
+                font-size: 12px;
+            }
+
+            .status-item {
+                font-size: 13px;
+            }
+
+            .status-item .num {
+                font-size: 15px;
+                min-width: 22px;
+            }
+
+            .btn-reset {
+                font-size: 17px;
+                padding: 4px 18px;
+            }
+
+            .cell {
+                width: 32px;
+                height: 32px;
+                font-size: 14px;
+                border-radius: 4px;
+            }
+
+            .cell .emoji {
+                font-size: 18px;
+            }
+
+            .board {
+                gap: 1.5px;
+                padding: 4px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .cell {
+                width: 26px;
+                height: 26px;
+                font-size: 11px;
+            }
+
+            .cell .emoji {
+                font-size: 14px;
+            }
+
+            .board {
+                gap: 1px;
+                padding: 3px;
+            }
+
+            .status-bar {
+                padding: 4px 8px;
+            }
+
+            .status-item {
+                font-size: 11px;
+            }
+
+            .status-item .num {
+                font-size: 13px;
+                min-width: 18px;
+            }
+
+            .btn-reset {
+                font-size: 14px;
+                padding: 4px 14px;
+            }
+        }
+
+        /* 针对大网格调整格子大小 */
+        .board.mode-10x20 .cell,
+        .board.mode-20x20 .cell {
+            width: 34px;
+            height: 34px;
+            font-size: 14px;
+        }
+
+        .board.mode-20x20 .cell .emoji {
+            font-size: 16px;
+        }
+
+        @media (max-width: 600px) {
+
+            .board.mode-10x20 .cell,
+            .board.mode-20x20 .cell {
+                width: 28px;
+                height: 28px;
+                font-size: 12px;
+            }
+
+            .board.mode-10x20 .cell .emoji,
+            .board.mode-20x20 .cell .emoji {
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 400px) {
+
+            .board.mode-10x20 .cell,
+            .board.mode-20x20 .cell {
+                width: 22px;
+                height: 22px;
+                font-size: 10px;
+            }
+
+            .board.mode-10x20 .cell .emoji,
+            .board.mode-20x20 .cell .emoji {
+                font-size: 11px;
+            }
+        }
+
+        /* 禁用点击 */
+        .cell.disabled {
+            cursor: default;
+        }
+
+        .cell.disabled:hover {
+            transform: none;
+            background: rgba(255, 255, 255, 0.10);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h1>💣 扫雷</h1>
+        <div class="subtitle">左键翻开 · 右键标旗</div>
+
+        <!-- 模式选择 -->
+        <div class="mode-bar" id="modeBar">
+            <button class="mode-btn active" data-mode="5x10">5 × 10 · 5雷</button>
+            <button class="mode-btn" data-mode="10x10">10 × 10 · 10雷</button>
+            <button class="mode-btn" data-mode="10x20">10 × 20 · 30雷</button>
+            <button class="mode-btn" data-mode="20x20">20 × 20 · 60雷</button>
+        </div>
+
+        <!-- 状态栏 -->
+        <div class="status-bar">
+            <div class="status-item">
+                💣 剩余 <span class="num mines" id="mineCount">0</span>
+            </div>
+            <button class="btn-reset" id="resetBtn">😀</button>
+            <div class="status-item">
+                ⏱️ <span class="num" id="timerDisplay">0</span>s
+            </div>
+        </div>
+
+        <!-- 棋盘 -->
+        <div class="board-wrapper">
+            <div class="board" id="board"></div>
+        </div>
+
+        <!-- 消息 -->
+        <div class="message" id="message">点击格子开始游戏</div>
+
+        <div class="footer">
+            <a href="https://chaison2026.github.io" target="_blank">Chaison</a> · 扫雷
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        //  扫雷游戏 - 完整逻辑
+        // ============================================================
+
+        // ---- 模式配置 ----
+        const MODES = {
+            '5x10': { rows: 5, cols: 10, mines: 5 },
+            '10x10': { rows: 10, cols: 10, mines: 10 },
+            '10x20': { rows: 10, cols: 20, mines: 30 },
+            '20x20': { rows: 20, cols: 20, mines: 60 },
+        };
+
+        // ---- DOM 引用 ----
+        const boardEl = document.getElementById('board');
+        const mineCountEl = document.getElementById('mineCount');
+        const timerDisplay = document.getElementById('timerDisplay');
+        const messageEl = document.getElementById('message');
+        const resetBtn = document.getElementById('resetBtn');
+        const modeBtns = document.querySelectorAll('.mode-btn');
+
+        // ---- 游戏状态 ----
+        let currentMode = '5x10';
+        let rows = 5;
+        let cols = 10;
+        let totalMines = 5;
+        let board = []; // 二维数组
+        let gameOver = false;
+        let firstClick = true;
+        let flagCount = 0;
+        let revealedCount = 0;
+        let timer = 0;
+        let timerInterval = null;
+        let isTimerRunning = false;
+        let isGameWon = false;
+
+        // ---- 工具 ----
+        function getNeighbors(r, c) {
+            const result = [];
+            for (let dr = -1; dr <= 1; dr++) {
+                for (let dc = -1; dc <= 1; dc++) {
+                    if (dr === 0 && dc === 0) continue;
+                    const nr = r + dr,
+                        nc = c + dc;
+                    if (nr >= 0 && nr < rows && nc >= 0 && nc < cols) {
+                        result.push({ row: nr, col: nc });
+                    }
+                }
+            }
+            return result;
+        }
+
+        // ---- 初始化棋盘 ----
+        function createEmptyBoard() {
+            return Array.from({ length: rows }, () =>
+                Array.from({ length: cols }, () => ({
+                    isMine: false,
+                    revealed: false,
+                    flagged: false,
+                    adjacentMines: 0,
+                }))
+            );
+        }
+
+        function placeMines(safeRow, safeCol) {
+            // 安全区域：safeRow, safeCol 及其邻居不能有雷
+            const safeSet = new Set();
+            safeSet.add(`${safeRow},${safeCol}`);
+            for (const n of getNeighbors(safeRow, safeCol)) {
+                safeSet.add(`${n.row},${n.col}`);
+            }
+
+            const positions = [];
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    if (!safeSet.has(`${r},${c}`)) {
+                        positions.push({ row: r, col: c });
+                    }
+                }
+            }
+
+            // 随机选 mineCount 个位置
+            const shuffled = positions.sort(() => Math.random() - 0.5);
+            const minePositions = shuffled.slice(0, totalMines);
+
+            for (const p of minePositions) {
+                board[p.row][p.col].isMine = true;
+            }
+
+            // 计算邻接雷数
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    if (board[r][c].isMine) continue;
+                    let count = 0;
+                    for (const n of getNeighbors(r, c)) {
+                        if (board[n.row][n.col].isMine) count++;
+                    }
+                    board[r][c].adjacentMines = count;
+                }
+            }
+        }
+
+        // ---- 重置游戏 ----
+        function resetGame() {
+            // 停止计时
+            stopTimer();
+            timer = 0;
+            timerDisplay.textContent = '0';
+            isTimerRunning = false;
+            gameOver = false;
+            firstClick = true;
+            flagCount = 0;
+            revealedCount = 0;
+            isGameWon = false;
+            messageEl.textContent = '点击格子开始游戏';
+            messageEl.className = 'message';
+            resetBtn.textContent = '😀';
+
+            board = createEmptyBoard();
+            renderBoard();
+            updateMineCount();
+        }
+
+        // ---- 开始游戏（首次点击时） ----
+        function startGame(safeRow, safeCol) {
+            placeMines(safeRow, safeCol);
+            firstClick = false;
+            startTimer();
+            // 翻开安全格子
+            revealCell(safeRow, safeCol);
+            renderBoard();
+            updateMineCount();
+        }
+
+        // ---- 翻开格子 ----
+        function revealCell(row, col) {
+            if (gameOver) return;
+            const cell = board[row][col];
+            if (cell.revealed || cell.flagged) return;
+
+            if (cell.isMine) {
+                // 踩雷
+                cell.revealed = true;
+                gameOver = true;
+                stopTimer();
+                resetBtn.textContent = '😵';
+                messageEl.textContent = '💥 踩到地雷了！点击 😀 重新开始';
+                messageEl.className = 'message lose';
+                revealAllMines(row, col);
+                renderBoard();
+                return;
+            }
+
+            // 翻开当前格子
+            cell.revealed = true;
+            revealedCount++;
+
+            // 如果是空白（adjacentMines === 0），递归展开
+            if (cell.adjacentMines === 0) {
+                for (const n of getNeighbors(row, col)) {
+                    if (!board[n.row][n.col].revealed && !board[n.row][n.col].flagged) {
+                        revealCell(n.row, n.col);
+                    }
+                }
+            }
+
+            // 检查胜利
+            checkWin();
+            renderBoard();
+            updateMineCount();
+        }
+
+        // ---- 检查胜利 ----
+        function checkWin() {
+            const totalSafe = rows * cols - totalMines;
+            if (revealedCount === totalSafe && !gameOver) {
+                gameOver = true;
+                isGameWon = true;
+                stopTimer();
+                resetBtn.textContent = '😎';
+                messageEl.textContent = '🎉 恭喜你赢了！点击 😀 再来一局';
+                messageEl.className = 'message win';
+                // 自动标记所有雷
+                for (let r = 0; r < rows; r++) {
+                    for (let c = 0; c < cols; c++) {
+                        if (board[r][c].isMine && !board[r][c].flagged) {
+                            board[r][c].flagged = true;
+                            flagCount++;
+                        }
+                    }
+                }
+                renderBoard();
+                updateMineCount();
+                return true;
+            }
+            return false;
+        }
+
+        // ---- 游戏结束显示所有雷 ----
+        function revealAllMines(explodedRow, explodedCol) {
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const cell = board[r][c];
+                    if (cell.isMine) {
+                        cell.revealed = true;
+                    }
+                }
+            }
+            // 标记爆炸的雷
+            if (explodedRow !== undefined && explodedCol !== undefined) {
+                // 在渲染时特殊处理
+            }
+        }
+
+        // ---- 切换旗子 ----
+        function toggleFlag(row, col) {
+            if (gameOver) return;
+            const cell = board[row][col];
+            if (cell.revealed) return;
+
+            if (cell.flagged) {
+                cell.flagged = false;
+                flagCount--;
+            } else {
+                cell.flagged = true;
+                flagCount++;
+            }
+            updateMineCount();
+            renderBoard();
+        }
+
+        // ---- 更新雷数显示 ----
+        function updateMineCount() {
+            const remaining = totalMines - flagCount;
+            mineCountEl.textContent = remaining >= 0 ? remaining : 0;
+        }
+
+        // ---- 计时器 ----
+        function startTimer() {
+            if (isTimerRunning) return;
+            isTimerRunning = true;
+            timerInterval = setInterval(() => {
+                timer++;
+                timerDisplay.textContent = timer;
+            }, 1000);
+        }
+
+        function stopTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            isTimerRunning = false;
+        }
+
+        // ---- 渲染棋盘 ----
+        function renderBoard() {
+            // 清空
+            boardEl.innerHTML = '';
+            boardEl.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+
+            // 添加模式类用于响应式
+            boardEl.className = 'board';
+            if (currentMode === '10x20' || currentMode === '20x20') {
+                boardEl.classList.add(`mode-${currentMode}`);
+            }
+
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const cell = board[r][c];
+                    const div = document.createElement('div');
+                    div.className = 'cell';
+                    div.dataset.row = r;
+                    div.dataset.col = c;
+
+                    if (cell.revealed) {
+                        div.classList.add('revealed');
+                        if (cell.isMine) {
+                            // 如果是爆炸的雷
+                            if (gameOver && cell.isMine) {
+                                // 检查是否是爆炸点
+                                div.textContent = '💣';
+                                div.classList.add('mine-shown');
+                            } else {
+                                div.textContent = '💣';
+                                div.classList.add('mine-shown');
+                            }
+                        } else if (cell.adjacentMines > 0) {
+                            div.textContent = cell.adjacentMines;
+                            div.classList.add(`n${cell.adjacentMines}`);
+                        } else {
+                            // 空白
+                            div.textContent = '';
+                        }
+                    } else {
+                        if (cell.flagged) {
+                            div.textContent = '🚩';
+                            div.classList.add('flagged');
+                        } else {
+                            div.textContent = '';
+                        }
+                    }
+
+                    // 如果是游戏结束且踩雷的格子
+                    if (gameOver && cell.isMine && cell.revealed) {
+                        // 如果是爆炸点，特殊标记
+                        // 我们没办法从cell知道是否是爆炸点，但已经显示💣了
+                    }
+
+                    // 事件
+                    div.addEventListener('click', () => handleClick(r, c));
+                    div.addEventListener('contextmenu', (e) => {
+                        e.preventDefault();
+                        handleRightClick(r, c);
+                    });
+
+                    // 禁用状态
+                    if (gameOver) {
+                        div.classList.add('disabled');
+                    }
+
+                    boardEl.appendChild(div);
+                }
+            }
+
+            // 如果游戏结束，标记爆炸点（需要额外处理）
+            if (gameOver) {
+                // 找到踩雷的点：在revealAllMines中标记，但这里无法区分
+                // 我们通过检查cell的样式来标记
+            }
+        }
+
+        // ---- 事件处理 ----
+        function handleClick(row, col) {
+            if (gameOver) return;
+            const cell = board[row][col];
+            if (cell.flagged) return;
+            if (cell.revealed) return;
+
+            if (firstClick) {
+                startGame(row, col);
+                return;
+            }
+
+            revealCell(row, col);
+        }
+
+        function handleRightClick(row, col) {
+            if (gameOver) return;
+            const cell = board[row][col];
+            if (cell.revealed) return;
+            toggleFlag(row, col);
+        }
+
+        // ---- 切换模式 ----
+        function setMode(modeKey) {
+            currentMode = modeKey;
+            const config = MODES[modeKey];
+            rows = config.rows;
+            cols = config.cols;
+            totalMines = config.mines;
+
+            // 更新按钮状态
+            modeBtns.forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.mode === modeKey);
+            });
+
+            resetGame();
+        }
+
+        // ---- 事件绑定 ----
+        modeBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                setMode(btn.dataset.mode);
+            });
+        });
+
+        resetBtn.addEventListener('click', () => {
+            resetGame();
+        });
+
+        // ---- 键盘快捷键 ----
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'r' || e.key === 'R') {
+                resetGame();
+            }
+        });
+
+        // ---- 初始化 ----
+        setMode('5x10');
+
+        // 在首次渲染后调整格子大小（针对大网格）
+        function adjustCellSize() {
+            // 用CSS处理
+        }
+
+        // 窗口大小变化时重新调整（主要是响应式已经处理）
+        window.addEventListener('resize', () => { });
+    </script>
+</body>
+
+</html>
