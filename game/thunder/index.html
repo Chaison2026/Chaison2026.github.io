@@ -15,23 +15,16 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-            min-height: 100vh;
+            /* 移除 margin 和固定 padding，由 flex 接管 */
+            margin: 0;
+            height: 100vh;
+            width: 100vw;
+            padding: 15px 20px;
+            box-sizing: border-box;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
-            padding: 20px;
-        }
-
-        .container {
-            background: rgba(25, 25, 35, 0.88);
-            backdrop-filter: blur(8px);
-            border-radius: 28px;
-            padding: 28px 30px 24px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            max-width: 820px;
-            width: 100%;
-            text-align: center;
+            overflow: hidden;
         }
 
         h1 {
@@ -45,7 +38,7 @@
         .subtitle {
             color: rgba(255, 255, 255, 0.35);
             font-size: 13px;
-            margin-bottom: 16px;
+            margin-bottom: 10px;
         }
 
         /* ---- 模式选择 ---- */
@@ -54,7 +47,7 @@
             flex-wrap: wrap;
             justify-content: center;
             gap: 10px;
-            margin-bottom: 16px;
+            margin-bottom: 12px;
         }
 
         .mode-btn {
@@ -84,15 +77,15 @@
 
         /* ---- 状态栏 ---- */
         .status-bar {
+            width: 100%;
+            max-width: 600px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 8px 12px;
             background: rgba(0, 0, 0, 0.25);
             border-radius: 14px;
-            margin-bottom: 14px;
-            flex-wrap: wrap;
-            gap: 8px;
+            margin-bottom: 10px;
         }
 
         .status-item {
@@ -135,12 +128,17 @@
             transform: scale(1.05);
         }
 
-        /* ---- 游戏网格 ---- */
+        /* ---- 游戏网格容器 (全屏适配核心) ---- */
         .board-wrapper {
-            overflow: auto;
-            padding: 4px 0;
+            flex: 1; /* 自动占满剩余的垂直空间 */
             display: flex;
             justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            min-height: 0; /* 防止 flex 子元素溢出 */
+            padding: 5px 0;
+            overflow: hidden; /* 彻底隐藏滚动条 */
         }
 
         .board {
@@ -154,20 +152,18 @@
         }
 
         .cell {
-            width: 40px;
-            height: 40px;
             border-radius: 6px;
             background: rgba(255, 255, 255, 0.10);
             border: 1px solid rgba(255, 255, 255, 0.06);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 17px;
             font-weight: 700;
             cursor: pointer;
             transition: background 0.15s, transform 0.1s;
             color: #f0f0f5;
             position: relative;
+            /* 宽高、字体大小完全由 JS 动态计算覆盖，移除了固定 px 值 */
         }
 
         .cell:hover:not(.revealed):not(.game-over) {
@@ -192,216 +188,48 @@
             border-color: rgba(255, 215, 0, 0.25);
         }
 
-        .cell.mine-exploded {
-            background: rgba(255, 50, 50, 0.40);
-            border-color: #ff3333;
-        }
-
         .cell.mine-shown {
             background: rgba(255, 100, 100, 0.15);
             border-color: rgba(255, 100, 100, 0.20);
         }
 
         /* 数字颜色 */
-        .cell.n1 {
-            color: #4a8cff;
-        }
-
-        .cell.n2 {
-            color: #34c759;
-        }
-
-        .cell.n3 {
-            color: #ff6b6b;
-        }
-
-        .cell.n4 {
-            color: #6c5ce7;
-        }
-
-        .cell.n5 {
-            color: #e74c4c;
-        }
-
-        .cell.n6 {
-            color: #1abc9c;
-        }
-
-        .cell.n7 {
-            color: #2d3436;
-        }
-
-        .cell.n8 {
-            color: #636e72;
-        }
-
-        .cell .emoji {
-            font-size: 22px;
-            line-height: 1;
-        }
+        .cell.n1 { color: #4a8cff; }
+        .cell.n2 { color: #34c759; }
+        .cell.n3 { color: #ff6b6b; }
+        .cell.n4 { color: #6c5ce7; }
+        .cell.n5 { color: #e74c4c; }
+        .cell.n6 { color: #1abc9c; }
+        .cell.n7 { color: #2d3436; }
+        .cell.n8 { color: #636e72; }
 
         /* ---- 消息 ---- */
         .message {
-            margin-top: 14px;
+            margin-top: 8px;
             font-size: 16px;
             font-weight: 500;
-            min-height: 32px;
+            min-height: 24px;
             color: #c8c8d4;
         }
 
-        .message.win {
-            color: #66d9a0;
-        }
-
-        .message.lose {
-            color: #ff6b6b;
-        }
+        .message.win { color: #66d9a0; }
+        .message.lose { color: #ff6b6b; }
 
         /* ---- 底部 ---- */
         .footer {
-            margin-top: 18px;
+            margin-top: 10px;
             font-size: 13px;
             color: rgba(255, 255, 255, 0.25);
+            flex-shrink: 0;
         }
 
         .footer a {
             color: rgba(255, 255, 255, 0.4);
             text-decoration: none;
         }
+        .footer a:hover { color: #a8b2ff; }
 
-        .footer a:hover {
-            color: #a8b2ff;
-        }
-
-        /* ---- 响应式 ---- */
-        @media (max-width: 600px) {
-            .container {
-                padding: 16px 12px;
-                border-radius: 20px;
-            }
-
-            h1 {
-                font-size: 22px;
-            }
-
-            .mode-btn {
-                padding: 6px 14px;
-                font-size: 12px;
-            }
-
-            .status-item {
-                font-size: 13px;
-            }
-
-            .status-item .num {
-                font-size: 15px;
-                min-width: 22px;
-            }
-
-            .btn-reset {
-                font-size: 17px;
-                padding: 4px 18px;
-            }
-
-            .cell {
-                width: 32px;
-                height: 32px;
-                font-size: 14px;
-                border-radius: 4px;
-            }
-
-            .cell .emoji {
-                font-size: 18px;
-            }
-
-            .board {
-                gap: 1.5px;
-                padding: 4px;
-            }
-        }
-
-        @media (max-width: 400px) {
-            .cell {
-                width: 26px;
-                height: 26px;
-                font-size: 11px;
-            }
-
-            .cell .emoji {
-                font-size: 14px;
-            }
-
-            .board {
-                gap: 1px;
-                padding: 3px;
-            }
-
-            .status-bar {
-                padding: 4px 8px;
-            }
-
-            .status-item {
-                font-size: 11px;
-            }
-
-            .status-item .num {
-                font-size: 13px;
-                min-width: 18px;
-            }
-
-            .btn-reset {
-                font-size: 14px;
-                padding: 4px 14px;
-            }
-        }
-
-        /* 针对大网格调整格子大小 (修改为 15x35) */
-        .board.mode-10x20 .cell,
-        .board.mode-15x35 .cell {
-            width: 34px;
-            height: 34px;
-            font-size: 14px;
-        }
-
-        .board.mode-15x35 .cell .emoji {
-            font-size: 16px;
-        }
-
-        @media (max-width: 600px) {
-
-            .board.mode-10x20 .cell,
-            .board.mode-15x35 .cell {
-                width: 28px;
-                height: 28px;
-                font-size: 12px;
-            }
-
-            .board.mode-10x20 .cell .emoji,
-            .board.mode-15x35 .cell .emoji {
-                font-size: 14px;
-            }
-        }
-
-        @media (max-width: 400px) {
-
-            .board.mode-10x20 .cell,
-            .board.mode-15x35 .cell {
-                width: 22px;
-                height: 22px;
-                font-size: 10px;
-            }
-
-            .board.mode-10x20 .cell .emoji,
-            .board.mode-15x35 .cell .emoji {
-                font-size: 11px;
-            }
-        }
-
-        /* 禁用点击 */
-        .cell.disabled {
-            cursor: default;
-        }
-
+        .cell.disabled { cursor: default; }
         .cell.disabled:hover {
             transform: none;
             background: rgba(255, 255, 255, 0.10);
@@ -411,86 +239,72 @@
 
 <body>
 
-    <div class="container">
-        <h1>💣 扫雷</h1>
-        <div class="subtitle">左键翻开 · 右键标旗</div>
+    <h1>💣 扫雷</h1>
+    <div class="subtitle">左键翻开 · 右键标旗</div>
 
-        <!-- 模式选择 -->
-        <div class="mode-bar" id="modeBar">
-            <button class="mode-btn active" data-mode="5x10">5 × 10 · 5雷</button>
-            <button class="mode-btn" data-mode="10x10">10 × 10 · 10雷</button>
-            <button class="mode-btn" data-mode="10x20">10 × 20 · 30雷</button>
-            <button class="mode-btn" data-mode="15x35">15 × 35 · 78雷</button>
+    <!-- 模式选择 -->
+    <div class="mode-bar" id="modeBar">
+        <button class="mode-btn active" data-mode="5x10">5 × 10 · 5雷</button>
+        <button class="mode-btn" data-mode="10x10">10 × 10 · 10雷</button>
+        <button class="mode-btn" data-mode="10x20">10 × 20 · 30雷</button>
+        <button class="mode-btn" data-mode="15x35">15 × 35 · 78雷</button>
+    </div>
+
+    <!-- 状态栏 -->
+    <div class="status-bar">
+        <div class="status-item">
+            💣 剩余 <span class="num mines" id="mineCount">0</span>
         </div>
-
-        <!-- 状态栏 -->
-        <div class="status-bar">
-            <div class="status-item">
-                💣 剩余 <span class="num mines" id="mineCount">0</span>
-            </div>
-            <button class="btn-reset" id="resetBtn">😀</button>
-            <div class="status-item">
-                ⏱️ <span class="num" id="timerDisplay">0</span>s
-            </div>
+        <button class="btn-reset" id="resetBtn">😀</button>
+        <div class="status-item">
+            ⏱️ <span class="num" id="timerDisplay">0</span>s
         </div>
+    </div>
 
-        <!-- 棋盘 -->
-        <div class="board-wrapper">
-            <div class="board" id="board"></div>
-        </div>
+    <!-- 棋盘 (去除了外框) -->
+    <div class="board-wrapper">
+        <div class="board" id="board"></div>
+    </div>
 
-        <!-- 消息 -->
-        <div class="message" id="message">点击格子开始游戏</div>
+    <!-- 消息 -->
+    <div class="message" id="message">点击格子开始游戏</div>
 
-        <div class="footer">
-            <a href="https://chaison2026.github.io" target="_blank">Chaison</a> · 扫雷
-        </div>
+    <div class="footer">
+        <a href="https://chaison2026.github.io" target="_blank">Chaison</a> · 扫雷
     </div>
 
     <script>
         // ============================================================
-        //  扫雷游戏 - 完整逻辑
+        //  扫雷游戏 - 完整逻辑 + 自适应缩放
         // ============================================================
 
-        // ---- 模式配置 ----
         const MODES = {
             '5x10': { rows: 5, cols: 10, mines: 5 },
             '10x10': { rows: 10, cols: 10, mines: 10 },
             '10x20': { rows: 10, cols: 20, mines: 30 },
-            '15x35': { rows: 15, cols: 35, mines: 78 }, // 已修改
+            '15x35': { rows: 15, cols: 35, mines: 78 },
         };
 
-        // ---- DOM 引用 ----
         const boardEl = document.getElementById('board');
+        const wrapperEl = document.querySelector('.board-wrapper');
         const mineCountEl = document.getElementById('mineCount');
         const timerDisplay = document.getElementById('timerDisplay');
         const messageEl = document.getElementById('message');
         const resetBtn = document.getElementById('resetBtn');
         const modeBtns = document.querySelectorAll('.mode-btn');
 
-        // ---- 游戏状态 ----
         let currentMode = '5x10';
-        let rows = 5;
-        let cols = 10;
-        let totalMines = 5;
-        let board = []; // 二维数组
-        let gameOver = false;
-        let firstClick = true;
-        let flagCount = 0;
-        let revealedCount = 0;
-        let timer = 0;
-        let timerInterval = null;
-        let isTimerRunning = false;
-        let isGameWon = false;
+        let rows = 5, cols = 10, totalMines = 5;
+        let board = [];
+        let gameOver = false, firstClick = true, flagCount = 0, revealedCount = 0;
+        let timer = 0, timerInterval = null, isTimerRunning = false;
 
-        // ---- 工具 ----
         function getNeighbors(r, c) {
             const result = [];
             for (let dr = -1; dr <= 1; dr++) {
                 for (let dc = -1; dc <= 1; dc++) {
                     if (dr === 0 && dc === 0) continue;
-                    const nr = r + dr,
-                        nc = c + dc;
+                    const nr = r + dr, nc = c + dc;
                     if (nr >= 0 && nr < rows && nc >= 0 && nc < cols) {
                         result.push({ row: nr, col: nc });
                     }
@@ -499,20 +313,15 @@
             return result;
         }
 
-        // ---- 初始化棋盘 ----
         function createEmptyBoard() {
             return Array.from({ length: rows }, () =>
                 Array.from({ length: cols }, () => ({
-                    isMine: false,
-                    revealed: false,
-                    flagged: false,
-                    adjacentMines: 0,
+                    isMine: false, revealed: false, flagged: false, adjacentMines: 0,
                 }))
             );
         }
 
         function placeMines(safeRow, safeCol) {
-            // 安全区域：safeRow, safeCol 及其邻居不能有雷
             const safeSet = new Set();
             safeSet.add(`${safeRow},${safeCol}`);
             for (const n of getNeighbors(safeRow, safeCol)) {
@@ -527,16 +336,11 @@
                     }
                 }
             }
-
-            // 随机选 mineCount 个位置
             const shuffled = positions.sort(() => Math.random() - 0.5);
             const minePositions = shuffled.slice(0, totalMines);
 
-            for (const p of minePositions) {
-                board[p.row][p.col].isMine = true;
-            }
+            for (const p of minePositions) board[p.row][p.col].isMine = true;
 
-            // 计算邻接雷数
             for (let r = 0; r < rows; r++) {
                 for (let c = 0; c < cols; c++) {
                     if (board[r][c].isMine) continue;
@@ -549,9 +353,7 @@
             }
         }
 
-        // ---- 重置游戏 ----
         function resetGame() {
-            // 停止计时
             stopTimer();
             timer = 0;
             timerDisplay.textContent = '0';
@@ -560,35 +362,29 @@
             firstClick = true;
             flagCount = 0;
             revealedCount = 0;
-            isGameWon = false;
             messageEl.textContent = '点击格子开始游戏';
             messageEl.className = 'message';
             resetBtn.textContent = '😀';
-
             board = createEmptyBoard();
             renderBoard();
             updateMineCount();
         }
 
-        // ---- 开始游戏（首次点击时） ----
         function startGame(safeRow, safeCol) {
             placeMines(safeRow, safeCol);
             firstClick = false;
             startTimer();
-            // 翻开安全格子
             revealCell(safeRow, safeCol);
             renderBoard();
             updateMineCount();
         }
 
-        // ---- 翻开格子 ----
         function revealCell(row, col) {
             if (gameOver) return;
             const cell = board[row][col];
             if (cell.revealed || cell.flagged) return;
 
             if (cell.isMine) {
-                // 踩雷
                 cell.revealed = true;
                 gameOver = true;
                 stopTimer();
@@ -600,11 +396,9 @@
                 return;
             }
 
-            // 翻开当前格子
             cell.revealed = true;
             revealedCount++;
 
-            // 如果是空白（adjacentMines === 0），递归展开
             if (cell.adjacentMines === 0) {
                 for (const n of getNeighbors(row, col)) {
                     if (!board[n.row][n.col].revealed && !board[n.row][n.col].flagged) {
@@ -612,24 +406,19 @@
                     }
                 }
             }
-
-            // 检查胜利
             checkWin();
             renderBoard();
             updateMineCount();
         }
 
-        // ---- 检查胜利 ----
         function checkWin() {
             const totalSafe = rows * cols - totalMines;
             if (revealedCount === totalSafe && !gameOver) {
                 gameOver = true;
-                isGameWon = true;
                 stopTimer();
                 resetBtn.textContent = '😎';
                 messageEl.textContent = '🎉 恭喜你赢了！点击 😀 再来一局';
                 messageEl.className = 'message win';
-                // 自动标记所有雷
                 for (let r = 0; r < rows; r++) {
                     for (let c = 0; c < cols; c++) {
                         if (board[r][c].isMine && !board[r][c].flagged) {
@@ -645,46 +434,29 @@
             return false;
         }
 
-        // ---- 游戏结束显示所有雷 ----
-        function revealAllMines(explodedRow, explodedCol) {
+        function revealAllMines() {
             for (let r = 0; r < rows; r++) {
                 for (let c = 0; c < cols; c++) {
-                    const cell = board[r][c];
-                    if (cell.isMine) {
-                        cell.revealed = true;
-                    }
+                    if (board[r][c].isMine) board[r][c].revealed = true;
                 }
-            }
-            // 标记爆炸的雷
-            if (explodedRow !== undefined && explodedCol !== undefined) {
-                // 在渲染时特殊处理
             }
         }
 
-        // ---- 切换旗子 ----
         function toggleFlag(row, col) {
             if (gameOver) return;
             const cell = board[row][col];
             if (cell.revealed) return;
-
-            if (cell.flagged) {
-                cell.flagged = false;
-                flagCount--;
-            } else {
-                cell.flagged = true;
-                flagCount++;
-            }
+            cell.flagged = !cell.flagged;
+            flagCount += cell.flagged ? 1 : -1;
             updateMineCount();
             renderBoard();
         }
 
-        // ---- 更新雷数显示 ----
         function updateMineCount() {
             const remaining = totalMines - flagCount;
             mineCountEl.textContent = remaining >= 0 ? remaining : 0;
         }
 
-        // ---- 计时器 ----
         function startTimer() {
             if (isTimerRunning) return;
             isTimerRunning = true;
@@ -702,17 +474,48 @@
             isTimerRunning = false;
         }
 
+        // ---- 🚀 核心：自适应缩放逻辑 ----
+        function resizeBoard() {
+            const board = document.getElementById('board');
+            if (!board || board.children.length === 0) return;
+
+            // 获取容器剩余的可视空间
+            const rect = wrapperEl.getBoundingClientRect();
+            const availableWidth = rect.width - 12;  // 减去 board 的内边距 6px*2
+            const availableHeight = rect.height - 12;
+
+            const gap = 2; // grid 间隔
+            // 计算格子最大理论宽高
+            const maxCellWidth = (availableWidth - gap * (cols - 1)) / cols;
+            const maxCellHeight = (availableHeight - gap * (rows - 1)) / rows;
+            
+            // 取宽高较小的作为统一格子尺寸，保证屏幕完全铺满且不溢出
+            let cellSize = Math.min(maxCellWidth, maxCellHeight);
+            
+            // 限制格子尺寸范围（避免太小时点不到，太大时溢出屏幕）
+            cellSize = Math.max(12, Math.min(50, cellSize));
+
+            // 应用尺寸到 DOM
+            const cells = board.querySelectorAll('.cell');
+            cells.forEach(cell => {
+                cell.style.width = cellSize + 'px';
+                cell.style.height = cellSize + 'px';
+                
+                // 调整字体大小
+                const text = cell.textContent;
+                if (text === '💣' || text === '🚩') {
+                    cell.style.fontSize = (cellSize * 0.65) + 'px';
+                } else {
+                    cell.style.fontSize = (cellSize * 0.45) + 'px';
+                }
+            });
+        }
+
         // ---- 渲染棋盘 ----
         function renderBoard() {
-            // 清空
             boardEl.innerHTML = '';
             boardEl.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
-
-            // 添加模式类用于响应式
             boardEl.className = 'board';
-            if (currentMode === '10x20' || currentMode === '15x35') { // 已修改
-                boardEl.classList.add(`mode-${currentMode}`);
-            }
 
             for (let r = 0; r < rows; r++) {
                 for (let c = 0; c < cols; c++) {
@@ -725,20 +528,12 @@
                     if (cell.revealed) {
                         div.classList.add('revealed');
                         if (cell.isMine) {
-                            // 如果是爆炸的雷
-                            if (gameOver && cell.isMine) {
-                                // 检查是否是爆炸点
-                                div.textContent = '💣';
-                                div.classList.add('mine-shown');
-                            } else {
-                                div.textContent = '💣';
-                                div.classList.add('mine-shown');
-                            }
+                            div.textContent = '💣';
+                            div.classList.add('mine-shown');
                         } else if (cell.adjacentMines > 0) {
                             div.textContent = cell.adjacentMines;
                             div.classList.add(`n${cell.adjacentMines}`);
                         } else {
-                            // 空白
                             div.textContent = '';
                         }
                     } else {
@@ -750,47 +545,29 @@
                         }
                     }
 
-                    // 如果是游戏结束且踩雷的格子
-                    if (gameOver && cell.isMine && cell.revealed) {
-                        // 如果是爆炸点，特殊标记
-                        // 我们没办法从cell知道是否是爆炸点，但已经显示💣了
-                    }
-
-                    // 事件
                     div.addEventListener('click', () => handleClick(r, c));
                     div.addEventListener('contextmenu', (e) => {
                         e.preventDefault();
                         handleRightClick(r, c);
                     });
 
-                    // 禁用状态
-                    if (gameOver) {
-                        div.classList.add('disabled');
-                    }
-
+                    if (gameOver) div.classList.add('disabled');
                     boardEl.appendChild(div);
                 }
             }
 
-            // 如果游戏结束，标记爆炸点（需要额外处理）
-            if (gameOver) {
-                // 找到踩雷的点：在revealAllMines中标记，但这里无法区分
-                // 我们通过检查cell的样式来标记
-            }
+            // 渲染完成后立即计算并调整尺寸
+            requestAnimationFrame(resizeBoard);
         }
 
-        // ---- 事件处理 ----
         function handleClick(row, col) {
             if (gameOver) return;
             const cell = board[row][col];
-            if (cell.flagged) return;
-            if (cell.revealed) return;
-
+            if (cell.flagged || cell.revealed) return;
             if (firstClick) {
                 startGame(row, col);
                 return;
             }
-
             revealCell(row, col);
         }
 
@@ -801,50 +578,36 @@
             toggleFlag(row, col);
         }
 
-        // ---- 切换模式 ----
         function setMode(modeKey) {
             currentMode = modeKey;
             const config = MODES[modeKey];
-            rows = config.rows;
-            cols = config.cols;
-            totalMines = config.mines;
-
-            // 更新按钮状态
+            rows = config.rows; cols = config.cols; totalMines = config.mines;
             modeBtns.forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.mode === modeKey);
             });
-
             resetGame();
         }
 
-        // ---- 事件绑定 ----
         modeBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                setMode(btn.dataset.mode);
-            });
+            btn.addEventListener('click', () => setMode(btn.dataset.mode));
         });
-
-        resetBtn.addEventListener('click', () => {
-            resetGame();
-        });
-
-        // ---- 键盘快捷键 ----
+        resetBtn.addEventListener('click', resetGame);
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'r' || e.key === 'R') {
-                resetGame();
-            }
+            if (e.key === 'r' || e.key === 'R') resetGame();
+        });
+
+        // ---- 监听窗口变化，实时调整尺寸----
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(resizeBoard, 150);
+        });
+        window.addEventListener('orientationchange', () => {
+            setTimeout(resizeBoard, 300);
         });
 
         // ---- 初始化 ----
         setMode('5x10');
-
-        // 在首次渲染后调整格子大小（针对大网格）
-        function adjustCellSize() {
-            // 用CSS处理
-        }
-
-        // 窗口大小变化时重新调整（主要是响应式已经处理）
-        window.addEventListener('resize', () => { });
     </script>
 </body>
 
