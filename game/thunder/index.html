@@ -355,29 +355,29 @@
             }
         }
 
-        /* 针对大网格调整格子大小 */
+        /* 针对大网格调整格子大小 (修改为 15x35) */
         .board.mode-10x20 .cell,
-        .board.mode-20x20 .cell {
+        .board.mode-15x35 .cell {
             width: 34px;
             height: 34px;
             font-size: 14px;
         }
 
-        .board.mode-20x20 .cell .emoji {
+        .board.mode-15x35 .cell .emoji {
             font-size: 16px;
         }
 
         @media (max-width: 600px) {
 
             .board.mode-10x20 .cell,
-            .board.mode-20x20 .cell {
+            .board.mode-15x35 .cell {
                 width: 28px;
                 height: 28px;
                 font-size: 12px;
             }
 
             .board.mode-10x20 .cell .emoji,
-            .board.mode-20x20 .cell .emoji {
+            .board.mode-15x35 .cell .emoji {
                 font-size: 14px;
             }
         }
@@ -385,14 +385,14 @@
         @media (max-width: 400px) {
 
             .board.mode-10x20 .cell,
-            .board.mode-20x20 .cell {
+            .board.mode-15x35 .cell {
                 width: 22px;
                 height: 22px;
                 font-size: 10px;
             }
 
             .board.mode-10x20 .cell .emoji,
-            .board.mode-20x20 .cell .emoji {
+            .board.mode-15x35 .cell .emoji {
                 font-size: 11px;
             }
         }
@@ -420,7 +420,7 @@
             <button class="mode-btn active" data-mode="5x10">5 × 10 · 5雷</button>
             <button class="mode-btn" data-mode="10x10">10 × 10 · 10雷</button>
             <button class="mode-btn" data-mode="10x20">10 × 20 · 30雷</button>
-            <button class="mode-btn" data-mode="20x20">20 × 20 · 60雷</button>
+            <button class="mode-btn" data-mode="15x35">15 × 35 · 78雷</button>
         </div>
 
         <!-- 状态栏 -->
@@ -457,7 +457,7 @@
             '5x10': { rows: 5, cols: 10, mines: 5 },
             '10x10': { rows: 10, cols: 10, mines: 10 },
             '10x20': { rows: 10, cols: 20, mines: 30 },
-            '20x20': { rows: 20, cols: 20, mines: 60 },
+            '15x35': { rows: 15, cols: 35, mines: 78 }, // 已修改
         };
 
         // ---- DOM 引用 ----
@@ -710,7 +710,7 @@
 
             // 添加模式类用于响应式
             boardEl.className = 'board';
-            if (currentMode === '10x20' || currentMode === '20x20') {
+            if (currentMode === '10x20' || currentMode === '15x35') { // 已修改
                 boardEl.classList.add(`mode-${currentMode}`);
             }
 
