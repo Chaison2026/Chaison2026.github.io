@@ -104,6 +104,57 @@
             box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
         }
 
+        /* ========== 几何工具 + 制作人 合并按钮 ========== */
+        .links .btn-group {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 10px 24px;
+            border-radius: 50px;
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            transition: all 0.3s ease;
+        }
+
+        .links .btn-group:hover {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-color: transparent;
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        /* 覆盖掉 .links a 的默认按钮样式，只保留文字样式 */
+        .links .btn-group a {
+            display: inline;
+            padding: 0;
+            border: none;
+            background: none;
+            border-radius: 0;
+            font-size: 14px;
+            font-weight: 500;
+            color: #e0e0ea;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .links .btn-group:hover a {
+            color: #fff;
+            background: none;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* 制作人小字 */
+        .links .btn-group a.maker-link {
+            font-size: 12px;
+            opacity: 0.75;
+        }
+
+        .links .btn-group a.maker-link:hover {
+            opacity: 1;
+            text-decoration: underline;
+        }
+
         /* 底部版权 - 浅色 */
         .footer {
             margin-top: 28px;
@@ -274,6 +325,18 @@
                 font-size: 13px;
             }
 
+            .links .btn-group {
+                padding: 8px 18px;
+            }
+
+            .links .btn-group a {
+                font-size: 13px;
+            }
+
+            .links .btn-group a.maker-link {
+                font-size: 11px;
+            }
+
             .modal-content {
                 padding: 30px 20px 28px;
                 max-width: 95%;
@@ -319,8 +382,11 @@
         <a href="#" onclick="openTeamModal(); return false;">📚 洛谷团队</a>
         <a href="/Code/" target="_blank">模板题 Code</a>
         <a href="https://chaison2026.github.io/game" target="_blank">🎮 游戏</a>
-        <!-- 新增 几何工具 链接 -->
-        <a href="https://chaison2026.github.io/geometric%20figure/" target="_blank">📐 几何工具（感谢<a href="https://www.luogu.com.cn/user/1392148" target="_blank">制作人</a>）</a>
+        <!-- 新增 几何工具 + 制作人 合并按钮 -->
+        <span class="btn-group">
+            <a href="https://chaison2026.github.io/geometric%20figure/" target="_blank">📐 几何工具</a>
+            <a href="https://www.luogu.com.cn/user/1392148" target="_blank" class="maker-link">（制作人）</a>
+        </span>
     </div>
 
     <!-- 底部 -->
