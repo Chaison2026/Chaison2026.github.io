@@ -1,0 +1,3901 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>动态几何 · 动点轨迹 + 内切/外接圆 · 完整版</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent
+        }
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            overflow: hidden
+        }
+
+        body {
+            font-family: "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+            font-size: 13px;
+            color: #202124;
+            background: #f1f3f4;
+            -webkit-user-select: none;
+            user-select: none
+        }
+
+        button {
+            font-family: inherit
+        }
+
+        #app {
+            display: flex;
+            height: 100vh;
+            overflow: hidden
+        }
+
+        #toolbar {
+            width: 54px;
+            flex: none;
+            background: #fff;
+            border-right: 1px solid #e0e5ec;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 5px 0;
+            overflow-y: auto;
+            overflow-x: hidden;
+            z-index: 20;
+            scrollbar-width: thin
+        }
+
+        #toolbar::-webkit-scrollbar {
+            width: 4px
+        }
+
+        #toolbar::-webkit-scrollbar-thumb {
+            background: #dadce0;
+            border-radius: 2px
+        }
+
+        .tool {
+            width: 42px;
+            height: 42px;
+            border: 0;
+            border-radius: 8px;
+            background: transparent;
+            color: #5f6368;
+            cursor: pointer;
+            display: grid;
+            place-items: center;
+            flex: none;
+            transition: background .13s, color .13s, transform .08s;
+            position: relative;
+            margin: 1px 0
+        }
+
+        .tool:hover {
+            background: #f1f3f4;
+            color: #1a73e8
+        }
+
+        .tool:active {
+            transform: scale(.92)
+        }
+
+        .tool.active {
+            background: #e8f0fe;
+            color: #1a73e8
+        }
+
+        .tool.anim {
+            color: #d81b60
+        }
+
+        .tool.anim.active {
+            background: #fce4ec;
+            color: #c2185b
+        }
+
+        .tool.conic {
+            color: #00838f
+        }
+
+        .tool.conic.active {
+            background: #e0f2f1;
+            color: #00695c
+        }
+
+        .tool svg {
+            width: 22px;
+            height: 22px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 1.7;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            pointer-events: none
+        }
+
+        .tool svg .f {
+            fill: currentColor;
+            stroke: none
+        }
+
+        .tool .tip {
+            position: absolute;
+            left: 52px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #3c4043;
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            white-space: nowrap;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity .12s;
+            z-index: 100;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .25)
+        }
+
+        .tool:hover .tip {
+            opacity: 1
+        }
+
+        .sep {
+            width: 26px;
+            height: 1px;
+            background: #e0e5ec;
+            margin: 4px 0;
+            flex: none
+        }
+
+        #canvasWrap {
+            position: relative;
+            flex: 1;
+            min-width: 0;
+            background: #fff;
+            overflow: hidden
+        }
+
+        #cv {
+            position: absolute;
+            inset: 0;
+            display: block;
+            touch-action: none
+        }
+
+        #coords {
+            position: absolute;
+            right: 10px;
+            bottom: 10px;
+            background: rgba(255, 255, 255, .93);
+            border: 1px solid #e0e5ec;
+            border-radius: 6px;
+            padding: 5px 10px;
+            font-size: 12px;
+            color: #5f6368;
+            pointer-events: none;
+            font-variant-numeric: tabular-nums;
+            box-shadow: 0 1px 4px rgba(60, 64, 67, .08)
+        }
+
+        #hint {
+            position: absolute;
+            left: 10px;
+            bottom: 10px;
+            max-width: calc(100% - 260px);
+            background: rgba(255, 255, 255, .93);
+            border: 1px solid #e0e5ec;
+            border-radius: 6px;
+            padding: 5px 12px;
+            font-size: 12px;
+            color: #5f6368;
+            pointer-events: none;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            box-shadow: 0 1px 4px rgba(60, 64, 67, .08)
+        }
+
+        #zoomCtrl {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px
+        }
+
+        #zoomCtrl button {
+            width: 32px;
+            height: 32px;
+            border: 1px solid #e0e5ec;
+            background: rgba(255, 255, 255, .96);
+            border-radius: 6px;
+            color: #5f6368;
+            cursor: pointer;
+            font-size: 16px;
+            line-height: 1;
+            display: grid;
+            place-items: center;
+            box-shadow: 0 1px 4px rgba(60, 64, 67, .08);
+            transition: background .13s, color .13s
+        }
+
+        #zoomCtrl button:hover {
+            background: #f1f3f4;
+            color: #1a73e8
+        }
+
+        #playBar {
+            position: absolute;
+            left: 50%;
+            top: 10px;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 255, 255, .97);
+            border: 1px solid #e0e5ec;
+            border-radius: 24px;
+            padding: 6px 14px;
+            box-shadow: 0 2px 12px rgba(60, 64, 67, .15);
+            z-index: 10
+        }
+
+        #playBar button {
+            width: 34px;
+            height: 34px;
+            border: 0;
+            border-radius: 50%;
+            background: #f1f3f4;
+            color: #5f6368;
+            cursor: pointer;
+            display: grid;
+            place-items: center;
+            transition: background .15s, color .15s, transform .08s
+        }
+
+        #playBar button:hover {
+            background: #e8f0fe;
+            color: #1a73e8
+        }
+
+        #playBar button:active {
+            transform: scale(.9)
+        }
+
+        #playBar button.main {
+            background: #1a73e8;
+            color: #fff;
+            width: 40px;
+            height: 40px
+        }
+
+        #playBar button.main:hover {
+            background: #1765cc
+        }
+
+        #playBar button.main.paused {
+            background: #d81b60
+        }
+
+        #playBar button.main.paused:hover {
+            background: #ad1457
+        }
+
+        #playBar svg {
+            width: 18px;
+            height: 18px;
+            fill: currentColor;
+            stroke: none
+        }
+
+        #playBar .lbl {
+            font-size: 12px;
+            color: #5f6368;
+            padding: 0 4px;
+            font-variant-numeric: tabular-nums
+        }
+
+        #playBar .spd {
+            border: 1px solid #dadce0;
+            border-radius: 14px;
+            padding: 4px 10px;
+            font-size: 11.5px;
+            color: #5f6368;
+            background: #fff;
+            cursor: pointer;
+            outline: none;
+            font-family: inherit
+        }
+
+        #side {
+            width: 294px;
+            flex: none;
+            background: #fff;
+            border-left: 1px solid #e0e5ec;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 15
+        }
+
+        .optsBar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 7px 12px;
+            border-bottom: 1px solid #f1f3f4;
+            flex: none;
+            flex-wrap: wrap
+        }
+
+        .optsBar label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11.5px;
+            color: #5f6368;
+            cursor: pointer
+        }
+
+        .optsBar input {
+            accent-color: #1a73e8;
+            cursor: pointer;
+            margin: 0
+        }
+
+        .panelHead {
+            padding: 9px 14px 7px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #5f6368;
+            letter-spacing: .5px;
+            border-bottom: 1px solid #f1f3f4;
+            flex: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between
+        }
+
+        .panelHead .mini {
+            font-size: 11px;
+            font-weight: 400;
+            color: #80868b;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 4px
+        }
+
+        .panelHead .mini:hover {
+            background: #f1f3f4;
+            color: #1a73e8
+        }
+
+        #styleArea {
+            flex: none;
+            border-bottom: 1px solid #f1f3f4;
+            padding: 10px 12px;
+            display: none
+        }
+
+        #styleArea.show {
+            display: block
+        }
+
+        .styleRow {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px
+        }
+
+        .styleRow:last-child {
+            margin-bottom: 0
+        }
+
+        .styleLbl {
+            font-size: 11px;
+            color: #80868b;
+            width: 52px;
+            flex: none
+        }
+
+        .swatches {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+            flex: 1
+        }
+
+        .sw {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: transform .1s
+        }
+
+        .sw:hover {
+            transform: scale(1.14)
+        }
+
+        .sw.on {
+            border-color: #202124;
+            box-shadow: 0 0 0 2px #fff inset
+        }
+
+        .slider {
+            flex: 1;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 3px;
+            border-radius: 2px;
+            background: #dadce0;
+            outline: none;
+            cursor: pointer
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 13px;
+            height: 13px;
+            border-radius: 50%;
+            background: #1a73e8;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, .3)
+        }
+
+        .slider::-moz-range-thumb {
+            width: 13px;
+            height: 13px;
+            border-radius: 50%;
+            background: #1a73e8;
+            cursor: pointer;
+            border: 0
+        }
+
+        .chkRow {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: #3c4043;
+            cursor: pointer
+        }
+
+        .chkRow input {
+            accent-color: #1a73e8;
+            cursor: pointer;
+            margin: 0
+        }
+
+        .btnMini {
+            border: 1px solid #dadce0;
+            background: #fff;
+            color: #5f6368;
+            border-radius: 5px;
+            padding: 4px 10px;
+            font-size: 11.5px;
+            cursor: pointer;
+            transition: all .13s
+        }
+
+        .btnMini:hover {
+            background: #e8f0fe;
+            color: #1a73e8;
+            border-color: #c5d8f7
+        }
+
+        .btnMini.on {
+            background: #e8f0fe;
+            color: #1a73e8;
+            border-color: #1a73e8
+        }
+
+        #listArea {
+            flex: 1;
+            overflow-y: auto;
+            padding: 4px 0;
+            min-height: 60px
+        }
+
+        #listArea::-webkit-scrollbar {
+            width: 6px
+        }
+
+        #listArea::-webkit-scrollbar-thumb {
+            background: #dadce0;
+            border-radius: 3px
+        }
+
+        .objRow {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 6px 12px;
+            cursor: pointer;
+            font-size: 12.5px;
+            line-height: 1.3;
+            transition: background .1s
+        }
+
+        .objRow:hover {
+            background: #f8f9fa
+        }
+
+        .objRow.sel {
+            background: #e8f0fe
+        }
+
+        .objRow.hide {
+            opacity: .42
+        }
+
+        .objDot {
+            width: 16px;
+            height: 16px;
+            flex: none;
+            display: grid;
+            place-items: center;
+            cursor: pointer
+        }
+
+        .objDot i {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            display: block;
+            position: relative
+        }
+
+        .objDot i.sq {
+            border-radius: 2px
+        }
+
+        .objDot i.anim {
+            box-shadow: 0 0 0 3px rgba(216, 27, 96, .22)
+        }
+
+        .objDot i.trail {
+            box-shadow: 0 0 0 3px rgba(255, 109, 0, .22)
+        }
+
+        .objName {
+            font-weight: 600;
+            color: #202124;
+            flex: none;
+            min-width: 22px
+        }
+
+        .objDef {
+            color: #5f6368;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex: 1
+        }
+
+        .empty {
+            text-align: center;
+            color: #9aa0a6;
+            font-size: 12.5px;
+            padding: 32px 16px;
+            line-height: 2
+        }
+
+        .empty b {
+            display: block;
+            font-size: 22px;
+            margin-bottom: 6px;
+            opacity: .35;
+            font-weight: 400
+        }
+
+        #inputArea {
+            flex: none;
+            border-top: 1px solid #e0e5ec;
+            padding: 8px 10px;
+            background: #fafbfc
+        }
+
+        #cmdInput {
+            width: 100%;
+            border: 1px solid #dadce0;
+            border-radius: 6px;
+            padding: 7px 10px;
+            font-size: 12.5px;
+            font-family: "SF Mono", Consolas, monospace;
+            outline: none;
+            color: #202124;
+            background: #fff;
+            transition: border-color .15s, box-shadow .15s
+        }
+
+        #cmdInput:focus {
+            border-color: #1a73e8;
+            box-shadow: 0 0 0 2px rgba(26, 115, 232, .12)
+        }
+
+        #cmdInput::placeholder {
+            color: #9aa0a6
+        }
+
+        #cmdTips {
+            font-size: 10.5px;
+            color: #9aa0a6;
+            margin-top: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis
+        }
+
+        #toast {
+            position: fixed;
+            left: 50%;
+            bottom: 46px;
+            transform: translate(-50%, 14px);
+            background: #323639;
+            color: #fff;
+            padding: 9px 20px;
+            border-radius: 8px;
+            font-size: 12.5px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .22s, transform .22s;
+            z-index: 999;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, .28);
+            max-width: 76vw;
+            text-align: center
+        }
+
+        #toast.show {
+            opacity: 1;
+            transform: translate(-50%, 0)
+        }
+
+        @media (max-width:800px) {
+            #side {
+                width: 240px
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <aside id="toolbar">
+            <button class="tool active" data-tool="move" title="移动"><svg viewBox="0 0 24 24">
+                    <path class="f" d="M6.2 2.6l12.6 8.1-5.4.85 3.15 6.35-2.4 1.15-3.05-6.25-3.7 3.65z" />
+                </svg><span class="tip">移动 / 拖动任意点 (1)</span></button>
+            <button class="tool" data-tool="point" title="点"><svg viewBox="0 0 24 24">
+                    <circle class="f" cx="12" cy="12" r="3.4" />
+                    <circle cx="12" cy="12" r="7.4" opacity=".3" />
+                </svg><span class="tip">自由点 (2)</span></button>
+            <div class="sep"></div>
+            <button class="tool anim" data-tool="animPoint" title="动点">
+                <svg viewBox="0 0 24 24">
+                    <circle cx="6" cy="12" r="3.4" />
+                    <circle class="f" cx="17" cy="9" r="2.6" />
+                    <path d="M9 12c2-3 5-4 8-3" stroke-dasharray="2.5 2.5" />
+                    <path d="M14 6.5l3 .5-.5 3" />
+                </svg>
+                <span class="tip">★ 动点（点在路径上自动运动）(3)</span>
+            </button>
+            <button class="tool anim" data-tool="trace" title="轨迹追踪">
+                <svg viewBox="0 0 24 24">
+                    <path d="M3 18c2-9 7-13 10-7s6 2 8-3" stroke-dasharray="3 2" />
+                    <circle class="f" cx="10" cy="9" r="2.4" />
+                    <circle cx="16" cy="14" r="1.4" />
+                    <circle cx="19" cy="9" r="1.1" />
+                </svg>
+                <span class="tip">★ 轨迹追踪（点击任意点开关）(4)</span>
+            </button>
+            <button class="tool anim" data-tool="locus" title="轨迹线">
+                <svg viewBox="0 0 24 24">
+                    <path d="M3 18c3-12 9-12 12 0" stroke-dasharray="3 3" />
+                    <circle class="f" cx="9" cy="9" r="2" />
+                    <circle class="f" cx="16" cy="15" r="1.5" />
+                </svg>
+                <span class="tip">★ 轨迹线（点 + 滑块）(5)</span>
+            </button>
+            <div class="sep"></div>
+            <button class="tool" data-tool="segment" title="线段"><svg viewBox="0 0 24 24">
+                    <line x1="6.6" y1="17.4" x2="17.4" y2="6.6" />
+                    <circle class="f" cx="6.6" cy="17.4" r="2.3" />
+                    <circle class="f" cx="17.4" cy="6.6" r="2.3" />
+                </svg><span class="tip">线段 (6)</span></button>
+            <button class="tool" data-tool="line" title="直线"><svg viewBox="0 0 24 24">
+                    <line x1="2.6" y1="21" x2="21.4" y2="3" />
+                    <circle class="f" cx="8" cy="15.6" r="2.1" />
+                    <circle class="f" cx="16" cy="8.4" r="2.1" />
+                </svg><span class="tip">直线 (7)</span></button>
+            <button class="tool" data-tool="ray" title="射线"><svg viewBox="0 0 24 24">
+                    <line x1="5" y1="19" x2="18.4" y2="5.6" />
+                    <path d="M18.4 5.6l-1.1 4.3M18.4 5.6l-4.3 1.1" />
+                    <circle class="f" cx="5" cy="19" r="2.3" />
+                </svg><span class="tip">射线 (8)</span></button>
+            <button class="tool" data-tool="vector" title="向量"><svg viewBox="0 0 24 24">
+                    <line x1="5.5" y1="18.5" x2="17" y2="7" />
+                    <path d="M18.6 5.4l-5.1 1.4M18.6 5.4l-1.4 5.1" />
+                    <circle class="f" cx="5.5" cy="18.5" r="2" />
+                </svg><span class="tip">向量 (9)</span></button>
+            <button class="tool" data-tool="circle" title="圆"><svg viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="8.2" />
+                    <circle class="f" cx="12" cy="12" r="1.9" />
+                    <circle class="f" cx="20.2" cy="12" r="1.7" />
+                </svg><span class="tip">圆 (C)</span></button>
+            <button class="tool" data-tool="polygon" title="多边形"><svg viewBox="0 0 24 24">
+                    <polygon points="12,3.4 20.6,19.6 3.4,19.6" />
+                </svg><span class="tip">多边形 (P)</span></button>
+            <div class="sep"></div>
+            <button class="tool conic" data-tool="circumcircle" title="外接圆">
+                <svg viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="9" opacity=".55" />
+                    <polygon points="12,4.5 19.5,17.5 4.5,17.5" />
+                </svg>
+                <span class="tip">★ 外接圆（点击多边形）(O)</span>
+            </button>
+            <button class="tool conic" data-tool="incircle" title="内切圆">
+                <svg viewBox="0 0 24 24">
+                    <polygon points="12,3 21,20 3,20" />
+                    <circle cx="12" cy="14.5" r="5" fill="none" stroke="currentColor" />
+                </svg>
+                <span class="tip">★ 内切圆（点击三角形）(J)</span>
+            </button>
+            <div class="sep"></div>
+            <button class="tool" data-tool="midpoint" title="中点"><svg viewBox="0 0 24 24">
+                    <line x1="4" y1="12" x2="20" y2="12" />
+                    <circle class="f" cx="4" cy="12" r="2" />
+                    <circle class="f" cx="20" cy="12" r="2" />
+                    <circle class="f" cx="12" cy="12" r="2.6" />
+                </svg><span class="tip">中点 (M)</span></button>
+            <button class="tool" data-tool="nDivi" title="等分点"><svg viewBox="0 0 24 24">
+                    <line x1="3" y1="18" x2="21" y2="18" />
+                    <circle class="f" cx="3" cy="18" r="1.8" />
+                    <circle class="f" cx="21" cy="18" r="1.8" />
+                    <circle class="f" cx="9" cy="18" r="1.5" />
+                    <circle class="f" cx="15" cy="18" r="1.5" />
+                </svg><span class="tip">等分点 (N)</span></button>
+            <button class="tool" data-tool="intersect" title="交点"><svg viewBox="0 0 24 24">
+                    <circle cx="9" cy="12" r="6" />
+                    <circle cx="15" cy="12" r="6" />
+                    <circle class="f" cx="12" cy="6.9" r="1.5" />
+                    <circle class="f" cx="12" cy="17.1" r="1.5" />
+                </svg><span class="tip">交点 (I)</span></button>
+            <div class="sep"></div>
+            <button class="tool" data-tool="perpendicular" title="垂线"><svg viewBox="0 0 24 24">
+                    <line x1="3" y1="18" x2="21" y2="18" />
+                    <line x1="11" y1="3" x2="11" y2="21" />
+                    <path d="M11 14h4v4" opacity=".55" />
+                </svg><span class="tip">垂线 (Q)</span></button>
+            <button class="tool" data-tool="parallel" title="平行线"><svg viewBox="0 0 24 24">
+                    <line x1="3" y1="9" x2="21" y2="9" />
+                    <line x1="3" y1="16" x2="21" y2="16" />
+                </svg><span class="tip">平行线 (W)</span></button>
+            <button class="tool" data-tool="perpBisector" title="垂直平分线"><svg viewBox="0 0 24 24">
+                    <line x1="4" y1="16" x2="20" y2="16" />
+                    <circle class="f" cx="4" cy="16" r="1.9" />
+                    <circle class="f" cx="20" cy="16" r="1.9" />
+                    <line x1="12" y1="3" x2="12" y2="21" opacity=".55" />
+                </svg><span class="tip">垂直平分线 (E)</span></button>
+            <button class="tool" data-tool="angleBisector" title="角平分线"><svg viewBox="0 0 24 24">
+                    <line x1="4" y1="20" x2="20" y2="20" />
+                    <line x1="4" y1="20" x2="19" y2="5" />
+                    <path d="M4 20l9.5-5.4" opacity=".55" />
+                </svg><span class="tip">角平分线 (R)</span></button>
+            <div class="sep"></div>
+            <button class="tool" data-tool="tangent" title="切线"><svg viewBox="0 0 24 24">
+                    <circle cx="12" cy="14" r="7" />
+                    <line x1="3" y1="7" x2="21" y2="7" />
+                    <circle class="f" cx="12" cy="7" r="1.8" />
+                </svg><span class="tip">切线 (T)</span></button>
+            <button class="tool" data-tool="secant" title="割线"><svg viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="8" />
+                    <line x1="4" y1="8" x2="20" y2="16" />
+                    <circle class="f" cx="8.6" cy="9.5" r="1.6" />
+                    <circle class="f" cx="15.4" cy="14.5" r="1.6" />
+                </svg><span class="tip">割线</span></button>
+            <div class="sep"></div>
+            <button class="tool" data-tool="func" title="函数"><svg viewBox="0 0 24 24">
+                    <path d="M4 18c4 0 5-12 10-12 3 0 4 3 5 5" />
+                    <path d="M3 20h18" opacity=".4" />
+                </svg><span class="tip">函数 y=f(x)</span></button>
+            <button class="tool" data-tool="ellipse" title="椭圆"><svg viewBox="0 0 24 24">
+                    <ellipse cx="12" cy="12" rx="9" ry="6" />
+                    <circle class="f" cx="8" cy="12" r="1.4" />
+                    <circle class="f" cx="16" cy="12" r="1.4" />
+                </svg><span class="tip">椭圆</span></button>
+            <button class="tool" data-tool="parabola" title="抛物线"><svg viewBox="0 0 24 24">
+                    <path d="M3 4c6 0 6 16 18 16" />
+                    <circle class="f" cx="12" cy="6" r="1.4" />
+                    <line x1="3" y1="20" x2="21" y2="20" opacity=".5" />
+                </svg><span class="tip">抛物线</span></button>
+            <button class="tool" data-tool="hyperbola" title="双曲线"><svg viewBox="0 0 24 24">
+                    <path d="M3 3c6 4 6 14 0 18" />
+                    <path d="M21 3c-6 4-6 14 0 18" />
+                    <circle class="f" cx="9" cy="12" r="1.2" />
+                    <circle class="f" cx="15" cy="12" r="1.2" />
+                </svg><span class="tip">双曲线</span></button>
+            <div class="sep"></div>
+            <button class="tool" data-tool="angle" title="角度"><svg viewBox="0 0 24 24">
+                    <line x1="4" y1="19" x2="21" y2="19" />
+                    <line x1="4" y1="19" x2="19" y2="4" />
+                    <path d="M13 19a9 9 0 0 0-2.2-6" opacity=".7" />
+                </svg><span class="tip">角度 (A)</span></button>
+            <button class="tool" data-tool="distance" title="距离"><svg viewBox="0 0 24 24">
+                    <line x1="4" y1="12" x2="20" y2="12" />
+                    <path d="M4 8.5v7M20 8.5v7M7 12l2.5-1.6v3.2zM17 12l-2.5-1.6v3.2z" opacity=".7" />
+                </svg><span class="tip">距离 (D)</span></button>
+            <button class="tool" data-tool="text" title="文本"><svg viewBox="0 0 24 24">
+                    <path d="M5 6.5V5h14v1.5M12 5v14M8.5 19h7" />
+                </svg><span class="tip">文本</span></button>
+            <button class="tool" data-tool="delete" title="删除"><svg viewBox="0 0 24 24">
+                    <path
+                        d="M4.8 6.5h14.4M9.6 6.5V4.2h4.8v2.3M6.8 6.5l1.05 13.3h8.3L17.2 6.5M10.2 10.2v6M13.8 10.2v6" />
+                </svg><span class="tip">删除 (Del)</span></button>
+            <div class="sep"></div>
+            <button class="tool" id="btnUndo" title="撤销"><svg viewBox="0 0 24 24">
+                    <path d="M9 7H15.5a5 5 0 0 1 0 10H8" />
+                    <path d="M11.5 4L8.5 7l3 3" />
+                </svg><span class="tip">撤销 (Ctrl+Z)</span></button>
+            <button class="tool" id="btnRedo" title="重做"><svg viewBox="0 0 24 24">
+                    <path d="M15 7H8.5a5 5 0 0 0 0 10H16" />
+                    <path d="M12.5 4l3 3-3 3" />
+                </svg><span class="tip">重做 (Ctrl+Y)</span></button>
+            <button class="tool" id="btnReset" title="重置视图"><svg viewBox="0 0 24 24">
+                    <path d="M20 11a8 8 0 1 0-2.35 6.15" />
+                    <path d="M20 5v6h-6" />
+                </svg><span class="tip">重置视图 (Home)</span></button>
+            <button class="tool" id="btnFit" title="适应视图"><svg viewBox="0 0 24 24">
+                    <path d="M4 9V4h5M20 15v5h-5M15 4h5v5M9 20H4v-5" />
+                </svg><span class="tip">适应视图 (F)</span></button>
+            <button class="tool" id="btnClear" title="清空"><svg viewBox="0 0 24 24">
+                    <path d="M6.2 6.2l11.6 11.6M17.8 6.2L6.2 17.8" />
+                </svg><span class="tip">清空画布</span></button>
+        </aside>
+
+        <main id="canvasWrap">
+            <canvas id="cv"></canvas>
+            <div id="playBar">
+                <button id="btnPlay" class="main paused" title="播放/暂停 (空格)">
+                    <svg id="icPlay" viewBox="0 0 24 24" style="display:none">
+                        <path d="M8 5v14l11-7z" />
+                    </svg>
+                    <svg id="icPause" viewBox="0 0 24 24">
+                        <path d="M6 5h4v14H6zM14 5h4v14h-4z" />
+                    </svg>
+                </button>
+                <button id="btnBack" title="减速"><svg viewBox="0 0 24 24">
+                        <path d="M11 12l8-6v12zM3 12l8-6v12z" opacity=".65" />
+                    </svg></button>
+                <span class="lbl" id="spdLbl">1.0×</span>
+                <button id="btnFwd" title="加速"><svg viewBox="0 0 24 24">
+                        <path d="M13 12L5 6v12zM21 12l-8-6v12z" opacity=".65" />
+                    </svg></button>
+                <select id="dirSel" class="spd" title="方向">
+                    <option value="1">→ 正方向</option>
+                    <option value="-1">← 反方向</option>
+                    <option value="2">↔ 往复</option>
+                </select>
+                <button id="btnClearTrails" class="spd" title="清除所有轨迹" style="padding:5px 10px">清轨迹</button>
+            </div>
+            <div id="zoomCtrl">
+                <button id="zIn">+</button>
+                <button id="zOut">−</button>
+                <button id="zFit" style="font-size:12px">⤢</button>
+            </div>
+            <div id="hint">拖动任意点改变图形 · 拖动空白平移 · 滚轮缩放</div>
+            <div id="coords">(0, 0)</div>
+        </main>
+
+        <aside id="side">
+            <div class="optsBar">
+                <label><input type="checkbox" id="cbGrid" checked>网格</label>
+                <label><input type="checkbox" id="cbAxes" checked>坐标轴</label>
+                <label><input type="checkbox" id="cbLabel" checked>标签</label>
+                <label><input type="checkbox" id="cbFade" checked>轨迹淡出</label>
+            </div>
+            <div class="panelHead">对象属性 <span class="mini" id="clearSel">取消选择</span></div>
+            <div id="styleArea">
+                <div id="styleBody"></div>
+            </div>
+            <div class="panelHead" style="border-top:1px solid #f1f3f4">代数区
+                <span class="mini" id="objCount">0 个对象</span>
+            </div>
+            <div id="listArea"></div>
+            <div id="inputArea">
+                <input id="cmdInput" type="text" spellcheck="false" autocomplete="off"
+                    placeholder="如 f(x)=x^2/3  或  A=(1,2)">
+                <div id="cmdTips">动点(路径) · 轨迹(点) · 内切圆(多边形) · 外接圆(多边形) · 中点(A,B)</div>
+            </div>
+        </aside>
+    </div>
+    <div id="toast"></div>
+
+    <script>
+        "use strict";
+        /* ==============================================================
+           基础
+           ============================================================== */
+        const canvas = document.getElementById('cv');
+        const ctx = canvas.getContext('2d');
+        const wrap = document.getElementById('canvasWrap');
+        const listArea = document.getElementById('listArea');
+        const styleArea = document.getElementById('styleArea');
+        const styleBody = document.getElementById('styleBody');
+        const hintEl = document.getElementById('hint');
+        const coordsEl = document.getElementById('coords');
+        const toastEl = document.getElementById('toast');
+        const cmdInput = document.getElementById('cmdInput');
+        const objCountEl = document.getElementById('objCount');
+        const spdLbl = document.getElementById('spdLbl');
+
+        const DPR = Math.max(1, Math.min(2.5, window.devicePixelRatio || 1));
+        let W = 0, H = 0;
+
+        const COL = {
+            point: '#1a73e8', line: '#0f9d58', circle: '#9c27b0',
+            polygon: '#e8710a', conic: '#d81b60', func: '#00838f',
+            slider: '#5f6368', tangent: '#00695c', locus: '#7b1fa2',
+            derived: '#5f6368', angle: '#d93025', anim: '#d81b60',
+            incircle: '#00695c', circumcircle: '#3949ab'
+        };
+        const SEL = '#ff6d00';
+        const COLOR_POOL = ['#1a73e8', '#0f9d58', '#e8710a', '#9c27b0', '#d93025', '#00838f',
+            '#5f6368', '#c2185b', '#3f51b5', '#827717', '#d81b60', '#00695c'];
+
+        const view = { x: 0, y: 0, scale: 64 };
+        const cfg = { grid: true, axes: true, labels: true, fade: true };
+
+        let objects = [];
+        let idSeq = 1;
+        let currentTool = 'move';
+        let selectedId = null;
+        let hoverId = null;
+        let pending = [];
+        let dragState = null;
+        let mouse = { sx: 0, sy: 0, wx: 0, wy: 0 };
+        let spaceDown = false;
+
+        const anim = { playing: true, speed: 1.0, direction: 1, frameId: null, lastTime: 0 };
+
+        const undoStack = [], redoStack = [];
+        const MAX_UNDO = 60;
+
+        /* ==============================================================
+           数学工具
+           ============================================================== */
+        const MFNS = {
+            sqrt: Math.sqrt, cbrt: Math.cbrt, abs: Math.abs,
+            sin: Math.sin, cos: Math.cos, tan: Math.tan,
+            asin: Math.asin, acos: Math.acos, atan: Math.atan, atan2: Math.atan2,
+            sinh: Math.sinh, cosh: Math.cosh, tanh: Math.tanh,
+            log: Math.log, ln: Math.log, log10: Math.log10, log2: Math.log2,
+            exp: Math.exp, floor: Math.floor, ceil: Math.ceil, round: Math.round,
+            sign: Math.sign, min: Math.min, max: Math.max, pow: Math.pow
+        };
+        function compileFn(expr, vars) {
+            if (!expr) return null;
+            let code = String(expr).replace(/\^/g, '**');
+            code = code.replace(/\bpi\b/gi, '(' + Math.PI + ')');
+            const varSet = new Set(vars || []);
+            for (const name of Object.keys(MFNS)) {
+                if (varSet.has(name)) continue;
+                code = code.replace(new RegExp('\\b' + name + '\\b', 'g'), 'F.' + name);
+            }
+            code = code.replace(/\be\b/g, '(' + Math.E + ')');
+            try {
+                const fn = new Function('F', ...vars, 'return (' + code + ');');
+                const t = vars.map(() => 0.5);
+                const r = fn(MFNS, ...t);
+                if (typeof r !== 'number') return null;
+                return (args) => fn(MFNS, ...args);
+            } catch (e) { return null; }
+        }
+        function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+        function fmt(v, d) {
+            d = d == null ? 2 : d;
+            if (!isFinite(v)) return '未定义';
+            if (Math.abs(v) < 1e-10) v = 0;
+            let s = v.toFixed(d);
+            if (s.indexOf('.') >= 0) s = s.replace(/0+$/, '').replace(/\.$/, '');
+            return s === '-0' ? '0' : s;
+        }
+        function fmtAngle(rad) { return fmt(rad * 180 / Math.PI, 1) + '°'; }
+        function s2w(sx, sy) { return [(sx - W / 2) / view.scale + view.x, view.y - (sy - H / 2) / view.scale]; }
+        function w2s(x, y) { return [(x - view.x) * view.scale + W / 2, (view.y - y) * view.scale + H / 2]; }
+        function segDistPx(p, a, b) {
+            const dx = b[0] - a[0], dy = b[1] - a[1];
+            const L2 = dx * dx + dy * dy;
+            let t = L2 > 1e-9 ? ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / L2 : 0;
+            t = clamp(t, 0, 1);
+            return Math.hypot(p[0] - (a[0] + t * dx), p[1] - (a[1] + t * dy));
+        }
+        function segDistPts(p, a, b) {
+            const dx = b[0] - a[0], dy = b[1] - a[1];
+            const L2 = dx * dx + dy * dy;
+            let t = L2 > 1e-9 ? ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / L2 : 0;
+            t = clamp(t, 0, 1);
+            return Math.hypot(p[0] - (a[0] + t * dx), p[1] - (a[1] + t * dy));
+        }
+        function lineDistPx(p, a, b) {
+            const dx = b[0] - a[0], dy = b[1] - a[1];
+            const L2 = dx * dx + dy * dy;
+            if (L2 < 1e-9) return Math.hypot(p[0] - a[0], p[1] - a[1]);
+            const t = ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / L2;
+            return Math.hypot(p[0] - (a[0] + t * dx), p[1] - (a[1] + t * dy));
+        }
+        function gridStep() {
+            const target = 78, raw = target / view.scale;
+            const e = Math.floor(Math.log10(raw)), base = Math.pow(10, e);
+            const m = raw / base;
+            return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 5 ? 5 : 10) * base;
+        }
+        function lineLine(A, B, C, D) {
+            const d1x = B.x - A.x, d1y = B.y - A.y, d2x = D.x - C.x, d2y = D.y - C.y;
+            const den = d1x * d2y - d1y * d2x;
+            if (Math.abs(den) < 1e-12) return [];
+            const t = ((C.x - A.x) * d2y - (C.y - A.y) * d2x) / den;
+            return [{ x: A.x + t * d1x, y: A.y + t * d1y }];
+        }
+        function lineCircle(A, B, C, r) {
+            const dx = B.x - A.x, dy = B.y - A.y, fx = A.x - C.x, fy = A.y - C.y;
+            const a = dx * dx + dy * dy;
+            if (a < 1e-14) return [];
+            const b = 2 * (fx * dx + fy * dy), c = fx * fx + fy * fy - r * r;
+            let disc = b * b - 4 * a * c;
+            if (disc < -1e-10) return [];
+            if (disc < 0) disc = 0;
+            const sq = Math.sqrt(disc);
+            if (sq < 1e-10) {
+                const t = -b / (2 * a);
+                return [{ x: A.x + t * dx, y: A.y + t * dy }];
+            }
+            const t1 = (-b - sq) / (2 * a), t2 = (-b + sq) / (2 * a);
+            return [{ x: A.x + t1 * dx, y: A.y + t1 * dy }, { x: A.x + t2 * dx, y: A.y + t2 * dy }];
+        }
+        function circleCircle(c1, r1, c2, r2) {
+            const dx = c2.x - c1.x, dy = c2.y - c1.y, d = Math.hypot(dx, dy);
+            if (d < 1e-12) return [];
+            if (d > r1 + r2 + 1e-10) return [];
+            if (d < Math.abs(r1 - r2) - 1e-10) return [];
+            const a = (r1 * r1 - r2 * r2 + d * d) / (2 * d);
+            let h2 = r1 * r1 - a * a;
+            if (h2 < 0) h2 = 0;
+            const h = Math.sqrt(h2);
+            const xm = c1.x + a * dx / d, ym = c1.y + a * dy / d;
+            if (h < 1e-10) return [{ x: xm, y: ym }];
+            return [{ x: xm + h * dy / d, y: ym - h * dx / d }, { x: xm - h * dy / d, y: ym + h * dx / d }];
+        }
+        function angleAt(A, B, C) {
+            const ux = A.x - B.x, uy = A.y - B.y;
+            const vx = C.x - B.x, vy = C.y - B.y;
+            const lu = Math.hypot(ux, uy), lv = Math.hypot(vx, vy);
+            if (lu < 1e-12 || lv < 1e-12) return 0;
+            let cos = (ux * vx + uy * vy) / (lu * lv);
+            cos = clamp(cos, -1, 1);
+            const ang = Math.acos(cos);
+            return (ux * vy - uy * vx) >= 0 ? ang : -ang;
+        }
+        function polyArea(pts) {
+            let s = 0;
+            for (let i = 0; i < pts.length; i++) {
+                const a = pts[i], b = pts[(i + 1) % pts.length];
+                s += a.x * b.y - b.x * a.y;
+            }
+            return Math.abs(s) / 2;
+        }
+        function hexA(hex, a) {
+            if (!hex || hex[0] !== '#') return hex;
+            let h = hex.slice(1);
+            if (h.length === 3) h = h.split('').map(c => c + c).join('');
+            const n = parseInt(h, 16);
+            return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
+        }
+        function getObj(id) { for (const o of objects) if (o.id === id) return o; return null; }
+        function getPt(id) { const o = getObj(id); return o && o.type === 'point' ? o : null; }
+
+        /* ★ 计算三角形内心（内切圆圆心）和半径 */
+        function computeIncircle(pts) {
+            if (pts.length < 3) return null;
+            const A = pts[0], B = pts[1], C = pts[2];
+            const a = Math.hypot(B.x - C.x, B.y - C.y);
+            const b = Math.hypot(A.x - C.x, A.y - C.y);
+            const c = Math.hypot(A.x - B.x, A.y - B.y);
+            const sum = a + b + c;
+            if (sum < 1e-9) return null;
+            const area = Math.abs((B.x - A.x) * (C.y - A.y) - (C.x - A.x) * (B.y - A.y)) / 2;
+            if (area < 1e-9) return null;
+            // 内心坐标 = (a·A + b·B + c·C) / (a+b+c)
+            const x = (a * A.x + b * B.x + c * C.x) / sum;
+            const y = (a * A.y + b * B.y + c * C.y) / sum;
+            // 半径 = 2·面积 / 周长
+            const r = 2 * area / sum;
+            return { x, y, r };
+        }
+
+        /* ★ 计算三点外接圆圆心和半径 */
+        function computeCircumcircle(A, B, C) {
+            const d = 2 * (A.x * (B.y - C.y) + B.x * (C.y - A.y) + C.x * (A.y - B.y));
+            if (Math.abs(d) < 1e-9) return null;
+            const A2 = A.x * A.x + A.y * A.y;
+            const B2 = B.x * B.x + B.y * B.y;
+            const C2 = C.x * C.x + C.y * C.y;
+            const x = (A2 * (B.y - C.y) + B2 * (C.y - A.y) + C2 * (A.y - B.y)) / d;
+            const y = (A2 * (C.x - B.x) + B2 * (A.x - C.x) + C2 * (B.x - A.x)) / d;
+            const r = Math.hypot(x - A.x, y - A.y);
+            return { x, y, r };
+        }
+
+        /* ★ 反求路径上离世界坐标最近的参数 t（用于拖动动点） */
+        function closestTOnPath(path, wx, wy) {
+            if (!path || path.valid === false) return null;
+            if (path.type === 'circle' && path._c) {
+                const ang = Math.atan2(wy - path._c.y, wx - path._c.x);
+                return (ang / (Math.PI * 2) + 1) % 1;
+            }
+            if ((path.type === 'segment' || path.type === 'vector') && path._p1) {
+                const dx = path._p2.x - path._p1.x, dy = path._p2.y - path._p1.y;
+                const L2 = dx * dx + dy * dy;
+                if (L2 < 1e-12) return 0;
+                return clamp(((wx - path._p1.x) * dx + (wy - path._p1.y) * dy) / L2, 0, 1);
+            }
+            if (path.type === 'line' && path._p1) {
+                const dx = path._p2.x - path._p1.x, dy = path._p2.y - path._p1.y;
+                const L2 = dx * dx + dy * dy;
+                if (L2 < 1e-12) return 0.5;
+                const t = ((wx - path._p1.x) * dx + (wy - path._p1.y) * dy) / L2;
+                return clamp((t + 1.5) / 3, 0, 1);
+            }
+            if (path.type === 'ray' && path._p1) {
+                const dx = path._p2.x - path._p1.x, dy = path._p2.y - path._p1.y;
+                const L2 = dx * dx + dy * dy;
+                if (L2 < 1e-12) return 0;
+                const t = ((wx - path._p1.x) * dx + (wy - path._p1.y) * dy) / L2;
+                return clamp(t / 2.5, 0, 1);
+            }
+            if (path.type === 'func' && path._fn) {
+                const [x0] = s2w(0, 0);
+                const [x1] = s2w(W, 0);
+                return clamp((wx - x0) / (x1 - x0), 0, 1);
+            }
+            if (path._pts && path._pts.length) {
+                const N = path._pts.length;
+                let best = 0, bd = Infinity;
+                for (let i = 0; i < N; i++) {
+                    const a = path._pts[i], b = path._pts[(i + 1) % N];
+                    const d = segDistPts([wx, wy], [a.x, a.y], [b.x, b.y]);
+                    if (d < bd) {
+                        bd = d;
+                        const dx = b.x - a.x, dy = b.y - a.y;
+                        const L2 = dx * dx + dy * dy;
+                        let tt = L2 > 1e-12 ? ((wx - a.x) * dx + (wy - a.y) * dy) / L2 : 0;
+                        tt = clamp(tt, 0, 1);
+                        best = (i + tt) / N;
+                    }
+                }
+                return best;
+            }
+            return null;
+        }
+
+        /* ==============================================================
+           命名
+           ============================================================== */
+        function usedNames() { const s = new Set(); for (const o of objects) s.add(o.name); return s; }
+        function autoName(type) {
+            const used = usedNames();
+            if (type === 'point') {
+                const L = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+                for (const ch of L) if (!used.has(ch)) return ch;
+                for (let i = 1; i < 200; i++)
+                    for (const ch of L) { const n = ch + i; if (!used.has(n)) return n; }
+            }
+            const greek = 'αβγδεζηθικλμνξοπρστυφχψω';
+            if (type === 'angle') {
+                for (const ch of greek) if (!used.has(ch)) return ch;
+            }
+            const prefix = {
+                segment: 's', line: 'l', ray: 'r', vector: 'v', secant: 'sec',
+                circle: 'c', polygon: 'poly', ellipse: 'e', parabola: 'par',
+                hyperbola: 'h', func: 'f', slider: 't', tangent: 'tan',
+                locus: 'loc', distance: 'd', text: 'txt', perpendicular: 'perp',
+                parallel: 'parl', perpBisector: 'pm', angleBisector: 'ab',
+                incircle: 'inc', circumcircle: 'cc'
+            }[type] || 'o';
+            for (let i = 1; i < 999; i++) {
+                const n = prefix + i;
+                if (!used.has(n)) return n;
+            }
+            return prefix + (idSeq++);
+        }
+        function findPointNear(sx, sy, r) {
+            r = r || 14;
+            let best = null, bd = r;
+            for (const o of objects) {
+                if (!o.visible || o.type !== 'point' || o.valid === false) continue;
+                const [px, py] = w2s(o.x, o.y);
+                const d = Math.hypot(px - sx, py - sy);
+                if (d < bd) { bd = d; best = o; }
+            }
+            return best;
+        }
+        function getOrCreatePoint(sx, sy) {
+            const near = findPointNear(sx, sy);
+            if (near) return near;
+            const [wx, wy] = s2w(sx, sy);
+            return makePoint(wx, wy);
+        }
+
+        /* ==============================================================
+           创建
+           ============================================================== */
+        function makePoint(x, y, opts) {
+            opts = opts || {};
+            const o = {
+                id: idSeq++, type: 'point', name: opts.name || autoName('point'),
+                x, y, free: opts.free !== false,
+                color: opts.color || COL.point, size: opts.size || 5,
+                visible: true, labelVisible: opts.labelVisible !== false,
+                parents: opts.parents || [], rule: opts.rule || null,
+                branch: opts.branch || 0,
+                pathId: opts.pathId != null ? opts.pathId : null,
+                t: opts.t != null ? opts.t : 0,
+                animating: !!opts.animating,
+                animSpeed: opts.animSpeed != null ? opts.animSpeed : 1,
+                direction: opts.direction != null ? opts.direction : 1,
+                bounceDir: 1,
+                showTrail: !!opts.showTrail,
+                trail: [],
+                trailMax: opts.trailMax || 1200
+            };
+            if (opts.name && usedNames().has(opts.name)) o.name = opts.name + '_' + o.id;
+            objects.push(o);
+            return o;
+        }
+        function makeLine(type, a, b, opts) {
+            opts = opts || {};
+            objects.push({
+                id: idSeq++, type, name: opts.name || autoName(type),
+                a: a.id, b: b.id,
+                color: opts.color || COL.line, width: opts.width || 2,
+                visible: true, labelVisible: true
+            });
+            return objects[objects.length - 1];
+        }
+        function makeCircle(center, throughOrRadius, opts) {
+            opts = opts || {};
+            const o = {
+                id: idSeq++, type: 'circle', name: opts.name || autoName('circle'),
+                color: opts.color || COL.circle, width: opts.width || 2,
+                visible: true, labelVisible: true
+            };
+            if (opts.polygonId != null) {
+                o.polygonId = opts.polygonId;
+                o.derived = opts.derived;
+                o.center = null;
+                o.through = null;
+            } else {
+                o.center = center.id;
+                if (typeof throughOrRadius === 'number') o.radius = throughOrRadius;
+                else o.through = throughOrRadius.id;
+            }
+            objects.push(o);
+            return o;
+        }
+        function makePolygon(pts, opts) {
+            opts = opts || {};
+            const o = {
+                id: idSeq++, type: 'polygon', name: opts.name || autoName('polygon'),
+                pts: pts.map(p => p.id),
+                color: opts.color || COL.polygon, width: opts.width || 2,
+                visible: true, labelVisible: true
+            };
+            objects.push(o);
+            return o;
+        }
+        function makeGeneric(type, fields, opts) {
+            opts = opts || {};
+            const o = Object.assign({
+                id: idSeq++, type, name: opts.name || autoName(type),
+                color: opts.color || COL[type] || '#5f6368',
+                width: opts.width || 2, visible: true, labelVisible: true
+            }, fields);
+            objects.push(o);
+            return o;
+        }
+
+        /* ==============================================================
+           依赖 & 求值
+           ============================================================== */
+        function refsOf(o) {
+            switch (o.type) {
+                case 'point':
+                    if (o.pathId != null) return [o.pathId, ...(o.parents || [])];
+                    return o.parents || [];
+                case 'segment': case 'line': case 'ray': case 'vector': case 'secant':
+                    return [o.a, o.b];
+                case 'circle':
+                    if (o.polygonId != null) return [o.polygonId];
+                    return o.through != null ? [o.center, o.through] : [o.center];
+                case 'polygon': return o.pts.slice();
+                case 'perpendicular': case 'parallel': return [o.line, o.point];
+                case 'perpBisector': return [o.a, o.b];
+                case 'angleBisector': return [o.a, o.b, o.c];
+                case 'angle': return [o.a, o.b, o.c];
+                case 'distance': return [o.a, o.b];
+                case 'tangent': return [o.curve, o.point];
+                case 'ellipse': case 'hyperbola': return [o.f1, o.f2, o.through];
+                case 'parabola': return [o.vertex, o.focus];
+                case 'locus': return [o.point, o.driver];
+                default: return [];
+            }
+        }
+        function topoOrder() {
+            const byId = new Map();
+            for (const o of objects) byId.set(o.id, o);
+            const order = [], mark = new Map();
+            function visit(o) {
+                const m = mark.get(o.id);
+                if (m === 2 || m === 1) return;
+                mark.set(o.id, 1);
+                for (const pid of refsOf(o)) {
+                    const p = byId.get(pid);
+                    if (p) visit(p);
+                }
+                mark.set(o.id, 2);
+                order.push(o);
+            }
+            for (const o of objects) visit(o);
+            return order;
+        }
+
+        function computePathPos(path, t) {
+            if (!path || path.valid === false) return null;
+            if (path.type === 'circle' && path._c) {
+                const ang = t * Math.PI * 2;
+                return { x: path._c.x + path._r * Math.cos(ang), y: path._c.y + path._r * Math.sin(ang) };
+            }
+            if ((path.type === 'segment' || path.type === 'vector') && path._p1) {
+                const tt = clamp(t, 0, 1);
+                return {
+                    x: path._p1.x + (path._p2.x - path._p1.x) * tt,
+                    y: path._p1.y + (path._p2.y - path._p1.y) * tt
+                };
+            }
+            if (path.type === 'line' && path._p1) {
+                const tt = (t - 0.5) * 3;
+                return {
+                    x: path._p1.x + (path._p2.x - path._p1.x) * tt,
+                    y: path._p1.y + (path._p2.y - path._p1.y) * tt
+                };
+            }
+            if (path.type === 'ray' && path._p1) {
+                const tt = t * 2.5;
+                return {
+                    x: path._p1.x + (path._p2.x - path._p1.x) * tt,
+                    y: path._p1.y + (path._p2.y - path._p1.y) * tt
+                };
+            }
+            if (path.type === 'func' && path._fn) {
+                const [x0] = s2w(0, 0);
+                const [x1] = s2w(W, 0);
+                const wx = x0 + (x1 - x0) * t;
+                try {
+                    const wy = path._fn([wx]);
+                    if (isFinite(wy)) return { x: wx, y: wy };
+                } catch (e) { }
+                return null;
+            }
+            if (path.type === 'ellipse' && path._pts) {
+                const idx = Math.floor(t * path._pts.length) % path._pts.length;
+                return path._pts[idx];
+            }
+            if (path.type === 'parabola' && path._pts) {
+                const idx = Math.floor(t * path._pts.length) % path._pts.length;
+                return path._pts[idx];
+            }
+            if (path.type === 'hyperbola' && path._pts) {
+                const all = path._pts.concat(path._pts2 || []);
+                if (!all.length) return null;
+                const idx = Math.floor(t * all.length) % all.length;
+                return all[idx];
+            }
+            if (path.type === 'polygon' && path._pts) {
+                const n = path._pts.length;
+                const tt = t * n;
+                const i0 = Math.floor(tt) % n;
+                const i1 = (i0 + 1) % n;
+                const lt = tt - Math.floor(tt);
+                return {
+                    x: path._pts[i0].x + (path._pts[i1].x - path._pts[i0].x) * lt,
+                    y: path._pts[i0].y + (path._pts[i1].y - path._pts[i0].y) * lt
+                };
+            }
+            if (path._pts && path._pts.length) {
+                const idx = Math.floor(t * path._pts.length) % path._pts.length;
+                return path._pts[idx];
+            }
+            return null;
+        }
+
+        function computeObj(o) {
+            o.valid = true;
+            if (o.type === 'point') {
+                if (!o.free && o.pathId != null) {
+                    const path = getObj(o.pathId);
+                    const pos = computePathPos(path, o.t);
+                    if (!pos) { o.valid = false; return; }
+                    o.x = pos.x; o.y = pos.y;
+                    return;
+                }
+                if (o.free) return;
+                if (o.rule === 'midpoint') {
+                    const A = getPt(o.parents[0]), B = getPt(o.parents[1]);
+                    if (!A || !B || A.valid === false || B.valid === false) { o.valid = false; return; }
+                    o.x = (A.x + B.x) / 2; o.y = (A.y + B.y) / 2; return;
+                }
+                if (o.rule === 'intersect') {
+                    const pts = computeIntersections(o.parents[0], o.parents[1]);
+                    if (!pts.length) { o.valid = false; return; }
+                    const idx = Math.min(o.branch, pts.length - 1);
+                    o.x = pts[idx].x; o.y = pts[idx].y; return;
+                }
+                if (o.rule === 'incircleCenter' || o.rule === 'circumcircleCenter') {
+                    const poly = getObj(o.parents[0]);
+                    if (!poly || !poly._pts) { o.valid = false; return; }
+                    if (o.rule === 'incircleCenter') {
+                        const inc = computeIncircle(poly._pts);
+                        if (!inc) { o.valid = false; return; }
+                        o.x = inc.x; o.y = inc.y;
+                    } else {
+                        if (poly._pts.length < 3) { o.valid = false; return; }
+                        const cc = computeCircumcircle(poly._pts[0], poly._pts[1], poly._pts[2]);
+                        if (!cc) { o.valid = false; return; }
+                        o.x = cc.x; o.y = cc.y;
+                    }
+                    return;
+                }
+                if (o.rule === 'expr' && o._fx) {
+                    try {
+                        o.x = parseFloat(o._fx());
+                        o.y = parseFloat(o._fy());
+                    } catch (e) { o.valid = false; }
+                    return;
+                }
+                return;
+            }
+            if (o.type === 'segment' || o.type === 'line' || o.type === 'ray' ||
+                o.type === 'vector' || o.type === 'secant') {
+                const A = getPt(o.a), B = getPt(o.b);
+                if (!A || !B || A.valid === false || B.valid === false) { o.valid = false; return; }
+                o._p1 = { x: A.x, y: A.y }; o._p2 = { x: B.x, y: B.y };
+                return;
+            }
+            if (o.type === 'perpendicular' || o.type === 'parallel') {
+                const base = getObj(o.line), P = getPt(o.point);
+                if (!base || !P || !base._p1 || P.valid === false) { o.valid = false; return; }
+                const dx = base._p2.x - base._p1.x, dy = base._p2.y - base._p1.y;
+                if (Math.abs(dx) < 1e-12 && Math.abs(dy) < 1e-12) { o.valid = false; return; }
+                o._p1 = { x: P.x, y: P.y };
+                if (o.type === 'perpendicular') o._p2 = { x: P.x - dy, y: P.y + dx };
+                else o._p2 = { x: P.x + dx, y: P.y + dy };
+                return;
+            }
+            if (o.type === 'perpBisector') {
+                const A = getPt(o.a), B = getPt(o.b);
+                if (!A || !B) { o.valid = false; return; }
+                const mx = (A.x + B.x) / 2, my = (A.y + B.y) / 2;
+                const dx = B.x - A.x, dy = B.y - A.y;
+                if (Math.abs(dx) < 1e-12 && Math.abs(dy) < 1e-12) { o.valid = false; return; }
+                o._p1 = { x: mx, y: my }; o._p2 = { x: mx - dy, y: my + dx };
+                return;
+            }
+            if (o.type === 'angleBisector') {
+                const A = getPt(o.a), B = getPt(o.b), C = getPt(o.c);
+                if (!A || !B || !C) { o.valid = false; return; }
+                let ux = A.x - B.x, uy = A.y - B.y;
+                let vx = C.x - B.x, vy = C.y - B.y;
+                const lu = Math.hypot(ux, uy), lv = Math.hypot(vx, vy);
+                if (lu < 1e-12 || lv < 1e-12) { o.valid = false; return; }
+                ux /= lu; uy /= lu; vx /= lv; vy /= lv;
+                let bx = ux + vx, by = uy + vy;
+                if (Math.hypot(bx, by) < 1e-9) { bx = -uy; by = ux; }
+                o._p1 = { x: B.x, y: B.y }; o._p2 = { x: B.x + bx, y: B.y + by };
+                return;
+            }
+            if (o.type === 'circle') {
+                /* ★ 内切圆 / 外接圆 派生圆 */
+                if (o.derived === 'incircle') {
+                    const poly = getObj(o.polygonId);
+                    if (!poly || poly.valid === false || !poly._pts || poly._pts.length !== 3) {
+                        o.valid = false; return;
+                    }
+                    const inc = computeIncircle(poly._pts);
+                    if (!inc) { o.valid = false; return; }
+                    o._c = { x: inc.x, y: inc.y };
+                    o._r = inc.r;
+                    return;
+                }
+                if (o.derived === 'circumcircle') {
+                    const poly = getObj(o.polygonId);
+                    if (!poly || poly.valid === false || !poly._pts || poly._pts.length < 3) {
+                        o.valid = false; return;
+                    }
+                    const cc = computeCircumcircle(poly._pts[0], poly._pts[1], poly._pts[2]);
+                    if (!cc) { o.valid = false; return; }
+                    o._c = { x: cc.x, y: cc.y };
+                    o._r = cc.r;
+                    return;
+                }
+                /* 普通圆：圆心 + 通过点（或半径） */
+                const C = getPt(o.center);
+                if (!C || C.valid === false) { o.valid = false; return; }
+                let r;
+                if (o.through != null) {
+                    const T = getPt(o.through);
+                    if (!T || T.valid === false) { o.valid = false; return; }
+                    r = Math.hypot(T.x - C.x, T.y - C.y);
+                } else r = o.radius;
+                if (!(r > 1e-12)) { o.valid = false; return; }
+                o._c = { x: C.x, y: C.y }; o._r = r;
+                return;
+            }
+            if (o.type === 'polygon') {
+                const pts = o.pts.map(getPt);
+                if (pts.some(p => !p || p.valid === false) || pts.length < 3) { o.valid = false; return; }
+                o._pts = pts.map(p => ({ x: p.x, y: p.y }));
+                return;
+            }
+            if (o.type === 'angle') {
+                const A = getPt(o.a), B = getPt(o.b), C = getPt(o.c);
+                if (!A || !B || !C) { o.valid = false; return; }
+                const lu = Math.hypot(A.x - B.x, A.y - B.y);
+                const lv = Math.hypot(C.x - B.x, C.y - B.y);
+                if (lu < 1e-12 || lv < 1e-12) { o.valid = false; return; }
+                o._angle = angleAt(A, B, C);
+                o._vertex = { x: B.x, y: B.y };
+                o._a = { x: A.x, y: A.y }; o._c = { x: C.x, y: C.y };
+                o._r = Math.min(lu, lv) * 0.42;
+                return;
+            }
+            if (o.type === 'distance') {
+                const A = getPt(o.a), B = getPt(o.b);
+                if (!A || !B) { o.valid = false; return; }
+                o._A = { x: A.x, y: A.y }; o._B = { x: B.x, y: B.y };
+                o._len = Math.hypot(B.x - A.x, B.y - A.y);
+                return;
+            }
+            if (o.type === 'func') {
+                if (!o._fn) o._fn = compileFn(o.expr, ['x']);
+                if (!o._fn) { o.valid = false; return; }
+                const pts = [];
+                const step = Math.max(1, Math.ceil(W / 320));
+                let prevY = null;
+                for (let sx = 0; sx <= W; sx += step) {
+                    const [wx] = s2w(sx, 0);
+                    let wy;
+                    try { wy = o._fn([wx]); } catch (e) { wy = NaN; }
+                    if (!isFinite(wy) || Math.abs(wy) > 1e7) { prevY = null; continue; }
+                    if (prevY !== null && Math.abs(wy - prevY) > 50) { prevY = wy; continue; }
+                    pts.push({ x: wx, y: wy });
+                    prevY = wy;
+                }
+                o._pts = pts;
+                return;
+            }
+            if (o.type === 'ellipse') {
+                const F1 = getPt(o.f1), F2 = getPt(o.f2), P = getPt(o.through);
+                if (!F1 || !F2 || !P) { o.valid = false; return; }
+                const d1 = Math.hypot(P.x - F1.x, P.y - F1.y);
+                const d2 = Math.hypot(P.x - F2.x, P.y - F2.y);
+                const a = (d1 + d2) / 2;
+                const c = Math.hypot(F2.x - F1.x, F2.y - F1.y) / 2;
+                if (a <= c + 1e-9) { o.valid = false; return; }
+                const b = Math.sqrt(a * a - c * c);
+                o._cx = (F1.x + F2.x) / 2; o._cy = (F1.y + F2.y) / 2;
+                o._a = a; o._b = b;
+                o._theta = Math.atan2(F2.y - F1.y, F2.x - F1.x);
+                o._pts = [];
+                for (let i = 0; i <= 90; i++) {
+                    const t = i / 90 * Math.PI * 2;
+                    o._pts.push(ellipseAt(o, t));
+                }
+                return;
+            }
+            if (o.type === 'parabola') {
+                const V = getPt(o.vertex), F = getPt(o.focus);
+                if (!V || !F) { o.valid = false; return; }
+                const dx = F.x - V.x, dy = F.y - V.y;
+                const p = Math.hypot(dx, dy);
+                if (p < 1e-9) { o.valid = false; return; }
+                o._vx = V.x; o._vy = V.y; o._p = p;
+                o._theta = Math.atan2(dy, dx);
+                o._pts = [];
+                const L = Math.max(p * 4, 8);
+                for (let i = -40; i <= 40; i++) {
+                    const t = i / 40 * L;
+                    o._pts.push(parabolaAt(o, t));
+                }
+                return;
+            }
+            if (o.type === 'hyperbola') {
+                const F1 = getPt(o.f1), F2 = getPt(o.f2), P = getPt(o.through);
+                if (!F1 || !F2 || !P) { o.valid = false; return; }
+                const d1 = Math.hypot(P.x - F1.x, P.y - F1.y);
+                const d2 = Math.hypot(P.x - F2.x, P.y - F2.y);
+                const a = Math.abs(d1 - d2) / 2;
+                const c = Math.hypot(F2.x - F1.x, F2.y - F1.y) / 2;
+                if (c <= a + 1e-9 || a < 1e-9) { o.valid = false; return; }
+                const b = Math.sqrt(c * c - a * a);
+                o._cx = (F1.x + F2.x) / 2; o._cy = (F1.y + F2.y) / 2;
+                o._a = a; o._b = b;
+                o._theta = Math.atan2(F2.y - F1.y, F2.x - F1.x);
+                o._pts = []; o._pts2 = [];
+                const L = 2.2;
+                for (let i = 0; i <= 60; i++) {
+                    const t = -L + i / 60 * 2 * L;
+                    o._pts.push(hyperAt(o, t));
+                    o._pts2.push(hyperAt(o, -t));
+                }
+                return;
+            }
+            if (o.type === 'tangent') {
+                const curve = getObj(o.curve), P = getPt(o.point);
+                if (!curve || !P || curve.valid === false) { o.valid = false; return; }
+                let dir = null;
+                if (curve.type === 'circle' && curve._c) {
+                    const dx = P.x - curve._c.x, dy = P.y - curve._c.y;
+                    dir = { x: -dy, y: dx };
+                } else if (curve.type === 'func' && curve._fn) {
+                    const h = 1e-6;
+                    try {
+                        const dydx = (curve._fn([P.x + h]) - curve._fn([P.x - h])) / (2 * h);
+                        if (isFinite(dydx)) dir = { x: 1, y: dydx };
+                    } catch (e) { }
+                } else if (curve._pts && curve._pts.length > 2) {
+                    let bi = 0, bd = Infinity;
+                    for (let i = 0; i < curve._pts.length; i++) {
+                        const d = (curve._pts[i].x - P.x) ** 2 + (curve._pts[i].y - P.y) ** 2;
+                        if (d < bd) { bd = d; bi = i; }
+                    }
+                    const i1 = Math.max(0, bi - 1), i2 = Math.min(curve._pts.length - 1, bi + 1);
+                    if (i1 !== i2) dir = { x: curve._pts[i2].x - curve._pts[i1].x, y: curve._pts[i2].y - curve._pts[i1].y };
+                }
+                if (!dir || (Math.abs(dir.x) < 1e-12 && Math.abs(dir.y) < 1e-12)) { o.valid = false; return; }
+                const len = Math.hypot(dir.x, dir.y);
+                dir.x /= len; dir.y /= len;
+                o._p1 = { x: P.x - dir.x * 200, y: P.y - dir.y * 200 };
+                o._p2 = { x: P.x + dir.x * 200, y: P.y + dir.y * 200 };
+                return;
+            }
+            if (o.type === 'slider') { return; }
+            if (o.type === 'locus') { computeLocus(o); return; }
+            if (o.type === 'text') {
+                const P = getPt(o.point);
+                if (P) { o._x = P.x; o._y = P.y; }
+                return;
+            }
+        }
+
+        function computeLocus(o) {
+            const P = getPt(o.point);
+            const driver = getObj(o.driver);
+            if (!P || !driver || driver.type !== 'slider') { o.valid = false; return; }
+            const orig = driver.value;
+            const samples = [];
+            const N = 180;
+            const order = topoOrder();
+            const set = new Set();
+            function addRefs(oo) {
+                if (set.has(oo.id)) return;
+                set.add(oo.id);
+                for (const pid of refsOf(oo)) {
+                    const p = getObj(pid);
+                    if (p) addRefs(p);
+                }
+            }
+            addRefs(P);
+            for (let i = 0; i <= N; i++) {
+                driver.value = driver.min + (driver.max - driver.min) * i / N;
+                for (const oo of order) {
+                    if (set.has(oo.id)) {
+                        try { computeObj(oo); } catch (e) { }
+                    }
+                }
+                if (P.valid !== false) samples.push({ x: P.x, y: P.y });
+            }
+            driver.value = orig;
+            evaluateAll();
+            o._samples = samples;
+        }
+
+        function ellipseAt(o, t) {
+            const ct = Math.cos(t), st = Math.sin(t);
+            const cth = Math.cos(o._theta), sth = Math.sin(o._theta);
+            return {
+                x: o._cx + o._a * ct * cth - o._b * st * sth,
+                y: o._cy + o._a * ct * sth + o._b * st * cth
+            };
+        }
+        function parabolaAt(o, t) {
+            const cth = Math.cos(o._theta), sth = Math.sin(o._theta);
+            const localX = t, localY = t * t / (4 * o._p);
+            return {
+                x: o._vx - localX * sth + localY * cth,
+                y: o._vy + localX * cth + localY * sth
+            };
+        }
+        function hyperAt(o, t) {
+            const ct = Math.cosh(t), st = Math.sinh(t);
+            const cth = Math.cos(o._theta), sth = Math.sin(o._theta);
+            return {
+                x: o._cx + o._a * ct * cth - o._b * st * sth,
+                y: o._cy + o._a * ct * sth + o._b * st * cth
+            };
+        }
+
+        function computeIntersections(id1, id2) {
+            const o1 = getObj(id1), o2 = getObj(id2);
+            if (!o1 || !o2 || o1.valid === false || o2.valid === false) return [];
+            const isLine = o => o._p1 && o._p2;
+            const isCirc = o => o._c && o._r != null;
+            if (isLine(o1) && isLine(o2)) return lineLine(o1._p1, o1._p2, o2._p1, o2._p2);
+            if (isLine(o1) && isCirc(o2)) return lineCircle(o1._p1, o1._p2, o2._c, o2._r);
+            if (isCirc(o1) && isLine(o2)) return lineCircle(o2._p1, o2._p2, o1._c, o1._r);
+            if (isCirc(o1) && isCirc(o2)) return circleCircle(o1._c, o1._r, o2._c, o2._r);
+            return [];
+        }
+
+        function evaluateAll() {
+            const order = topoOrder();
+            for (const o of order) {
+                try { computeObj(o); } catch (e) { o.valid = false; }
+            }
+        }
+
+        /* ★ 统一的轨迹记录：任何位置变化后调用，所有开启追踪的点都会记录 */
+        function recordAllTrails() {
+            for (const o of objects) {
+                if (o.type !== 'point' || !o.showTrail || o.valid === false) continue;
+                const last = o.trail[o.trail.length - 1];
+                const minDist = 0.004;
+                if (!last || Math.abs(last.x - o.x) > minDist || Math.abs(last.y - o.y) > minDist) {
+                    o.trail.push({ x: o.x, y: o.y });
+                    const cap = o.trailMax || 1200;
+                    if (o.trail.length > cap) o.trail.shift();
+                }
+            }
+        }
+
+        /* ★ 动画引擎：只推进"带路径的动点"的 t；从动点靠 evaluate 更新；
+           最后统一 recordAllTrails，从动点轨迹因此被记录 */
+        function tickAnimations(dt) {
+            let moved = false;
+            for (const o of objects) {
+                if (o.type !== 'point' || !o.animating || o.pathId == null) continue;
+                if (o.direction === 2) {
+                    o.t += o.bounceDir * (o.animSpeed * anim.speed * dt * 0.28);
+                    if (o.t > 1) { o.t = 1; o.bounceDir = -1; }
+                    if (o.t < 0) { o.t = 0; o.bounceDir = 1; }
+                } else {
+                    o.t += o.animSpeed * anim.speed * dt * 0.28 * o.direction;
+                    if (o.t > 1) o.t -= 1;
+                    if (o.t < 0) o.t += 1;
+                }
+                computeObj(o);
+                moved = true;
+            }
+            if (moved) {
+                const order = topoOrder();
+                for (const o of order) {
+                    if (o.type === 'point' && o.animating && o.pathId != null) continue;
+                    try { computeObj(o); } catch (e) { }
+                }
+                recordAllTrails();
+            }
+            return moved;
+        }
+
+        function startAnimLoop() {
+            if (anim.frameId) return;
+            let last = performance.now();
+            function loop(now) {
+                const dt = Math.min(0.1, (now - last) / 1000);
+                last = now;
+                if (anim.playing) {
+                    const moved = tickAnimations(dt);
+                    if (moved) draw();
+                }
+                anim.frameId = requestAnimationFrame(loop);
+            }
+            anim.frameId = requestAnimationFrame(loop);
+            anim.lastTime = last;
+        }
+
+        /* ==============================================================
+           绘制
+           ============================================================== */
+        function resize() {
+            const r = wrap.getBoundingClientRect();
+            W = Math.max(1, Math.round(r.width));
+            H = Math.max(1, Math.round(r.height));
+            canvas.width = Math.round(W * DPR);
+            canvas.height = Math.round(H * DPR);
+            canvas.style.width = W + 'px';
+            canvas.style.height = H + 'px';
+            ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+            evaluateAll();
+            draw();
+        }
+        function drawGrid() {
+            const step = gridStep();
+            const [x0, y0] = s2w(0, H), [x1, y1] = s2w(W, 0);
+            const i0 = Math.floor(x0 / step) - 1, i1 = Math.ceil(x1 / step) + 1;
+            const j0 = Math.floor(y0 / step) - 1, j1 = Math.ceil(y1 / step) + 1;
+            ctx.save();
+            ctx.lineWidth = 1;
+            const minorP = [], majorP = [];
+            for (let i = i0; i <= i1; i++) {
+                const sx = Math.round(w2s(i * step, 0)[0]) + 0.5;
+                (i % 5 === 0 ? majorP : minorP).push(['v', sx]);
+            }
+            for (let j = j0; j <= j1; j++) {
+                const sy = Math.round(w2s(0, j * step)[1]) + 0.5;
+                (j % 5 === 0 ? majorP : minorP).push(['h', sy]);
+            }
+            ctx.strokeStyle = '#f2f5fa';
+            ctx.beginPath();
+            for (const [d, p] of minorP) {
+                if (d === 'v') { ctx.moveTo(p, 0); ctx.lineTo(p, H); }
+                else { ctx.moveTo(0, p); ctx.lineTo(W, p); }
+            }
+            ctx.stroke();
+            ctx.strokeStyle = '#e3e8ef';
+            ctx.beginPath();
+            for (const [d, p] of majorP) {
+                if (d === 'v') { ctx.moveTo(p, 0); ctx.lineTo(p, H); }
+                else { ctx.moveTo(0, p); ctx.lineTo(W, p); }
+            }
+            ctx.stroke();
+            ctx.restore();
+        }
+        function drawAxes() {
+            const [ox, oy] = w2s(0, 0);
+            ctx.save();
+            ctx.strokeStyle = '#5f6368'; ctx.fillStyle = '#5f6368'; ctx.lineWidth = 1.4;
+            if (oy > -50 && oy < H + 50) {
+                ctx.beginPath(); ctx.moveTo(0, oy); ctx.lineTo(W - 6, oy); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(W - 6, oy); ctx.lineTo(W - 15, oy - 5); ctx.lineTo(W - 15, oy + 5);
+                ctx.closePath(); ctx.fill();
+            }
+            if (ox > -50 && ox < W + 50) {
+                ctx.beginPath(); ctx.moveTo(ox, H); ctx.lineTo(ox, 6); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(ox, 6); ctx.lineTo(ox - 5, 15); ctx.lineTo(ox + 5, 15);
+                ctx.closePath(); ctx.fill();
+            }
+            const step = gridStep();
+            if (step * view.scale >= 42) {
+                ctx.font = '11px system-ui,sans-serif';
+                ctx.fillStyle = '#80868b';
+                ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+                const ly = clamp(oy + 5, 3, H - 16);
+                const [x0] = s2w(0, 0), [x1] = s2w(W, 0);
+                for (let i = Math.floor(x0 / step) - 1; i <= Math.ceil(x1 / step) + 1; i++) {
+                    if (i === 0) continue;
+                    const sx = w2s(i * step, 0)[0];
+                    if (sx < 18 || sx > W - 18) continue;
+                    ctx.fillText(fmt(i * step), sx, ly);
+                }
+                ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+                const lx = clamp(ox - 7, 24, W - 4);
+                const [, y0] = s2w(0, H), [, y1] = s2w(0, 0);
+                for (let j = Math.floor(y0 / step) - 1; j <= Math.ceil(y1 / step) + 1; j++) {
+                    if (j === 0) continue;
+                    const sy = w2s(0, j * step)[1];
+                    if (sy < 12 || sy > H - 12) continue;
+                    ctx.fillText(fmt(j * step), lx, sy);
+                }
+            }
+            ctx.restore();
+        }
+        function isSel(o) { return selectedId === o.id; }
+        function isHov(o) { return hoverId === o.id; }
+        function strokeCol(o, base) {
+            if (isSel(o)) return SEL;
+            if (isHov(o)) return '#1a73e8';
+            return base || o.color;
+        }
+        function lineW(o, base) {
+            const w = base || o.width || 2;
+            if (isSel(o)) return w + 1.2;
+            if (isHov(o)) return w + 0.5;
+            return w;
+        }
+        function labelText(str, x, y, color, sel, size) {
+            ctx.save();
+            ctx.font = (size || 12.5) + 'px "PingFang SC",system-ui,sans-serif';
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.lineWidth = 3.4;
+            ctx.strokeStyle = 'rgba(255,255,255,.94)';
+            ctx.strokeText(str, x, y);
+            ctx.fillStyle = sel ? '#e65100' : (color || '#3c4043');
+            ctx.fillText(str, x, y);
+            ctx.restore();
+        }
+
+        function drawTrails() {
+            for (const o of objects) {
+                if (o.type !== 'point' || !o.showTrail || !o.trail || o.trail.length < 2) continue;
+                const N = o.trail.length;
+                ctx.save();
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                const segs = Math.min(N - 1, 500);
+                const start = N - 1 - segs;
+                for (let i = 0; i < segs; i++) {
+                    const p1 = o.trail[start + i];
+                    const p2 = o.trail[start + i + 1];
+                    const a = cfg.fade ? (i / segs) * 0.85 + 0.05 : 0.72;
+                    const [x1, y1] = w2s(p1.x, p1.y);
+                    const [x2, y2] = w2s(p2.x, p2.y);
+                    ctx.strokeStyle = hexA(isSel(o) ? SEL : o.color, a);
+                    ctx.lineWidth = cfg.fade ? 1 + (i / segs) * 2.2 : 2.2;
+                    ctx.beginPath();
+                    ctx.moveTo(x1, y1);
+                    ctx.lineTo(x2, y2);
+                    ctx.stroke();
+                }
+                ctx.restore();
+            }
+        }
+
+        function drawPoint(o) {
+            const [x, y] = w2s(o.x, o.y);
+            if (x < -60 || x > W + 60 || y < -60 || y > H + 60) return;
+            const sel = isSel(o), hov = isHov(o);
+            const r = o.size || 5;
+
+            if (o.animating) {
+                ctx.save();
+                const t = performance.now() / 1000;
+                const pulse = 1 + 0.18 * Math.sin(t * 3.5);
+                ctx.beginPath();
+                ctx.arc(x, y, (r + 8) * pulse, 0, Math.PI * 2);
+                ctx.strokeStyle = hexA(o.color, 0.55);
+                ctx.lineWidth = 1.6;
+                ctx.stroke();
+                ctx.restore();
+            } else if (o.showTrail && o.trail && o.trail.length > 2) {
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(x, y, r + 6, 0, Math.PI * 2);
+                ctx.strokeStyle = hexA(o.color, 0.32);
+                ctx.lineWidth = 1.4;
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            if (sel || hov) {
+                ctx.beginPath();
+                ctx.arc(x, y, r + 7, 0, Math.PI * 2);
+                ctx.fillStyle = sel ? 'rgba(255,109,0,.18)' : 'rgba(26,115,232,.12)';
+                ctx.fill();
+            }
+            ctx.beginPath();
+            ctx.arc(x, y, r, 0, Math.PI * 2);
+            ctx.fillStyle = '#fff';
+            ctx.fill();
+            ctx.lineWidth = 2.3;
+            ctx.strokeStyle = sel ? SEL : (hov ? '#1a73e8' : o.color);
+            ctx.stroke();
+
+            if (cfg.labels && o.labelVisible !== false) {
+                ctx.font = '600 13px "PingFang SC",system-ui,sans-serif';
+                ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+                ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(255,255,255,.9)';
+                const tx = x + r + 4, ty = y - r - 2;
+                ctx.strokeText(o.name, tx, ty);
+                ctx.fillStyle = sel ? '#e65100' : o.color;
+                ctx.fillText(o.name, tx, ty);
+            }
+        }
+
+        function drawStraight(o) {
+            if (!o._p1 || !o._p2) return;
+            let [x1, y1] = w2s(o._p1.x, o._p1.y);
+            let [x2, y2] = w2s(o._p2.x, o._p2.y);
+            const dx = x2 - x1, dy = y2 - y1;
+            const L = Math.hypot(dx, dy);
+            if (L < 1e-6) return;
+            const K = 6000 / L;
+            if (o.type === 'line' || o.type === 'perpendicular' || o.type === 'parallel' ||
+                o.type === 'perpBisector' || o.type === 'angleBisector' || o.type === 'tangent') {
+                x1 -= dx * K; y1 -= dy * K; x2 += dx * K; y2 += dy * K;
+            } else if (o.type === 'ray') {
+                x2 += dx * K; y2 += dy * K;
+            }
+            ctx.save();
+            ctx.lineCap = 'round';
+            ctx.lineWidth = lineW(o);
+            ctx.strokeStyle = strokeCol(o);
+            if (o.type === 'secant' || o.type === 'tangent') {
+                ctx.setLineDash(o.type === 'secant' ? [9, 4] : []);
+            }
+            ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+            ctx.restore();
+
+            if (o.type === 'vector') {
+                const ang = Math.atan2(y2 - y1, x2 - x1);
+                ctx.save();
+                ctx.beginPath();
+                ctx.moveTo(x2, y2);
+                ctx.lineTo(x2 - 12 * Math.cos(ang - 0.42), y2 - 12 * Math.sin(ang - 0.42));
+                ctx.lineTo(x2 - 12 * Math.cos(ang + 0.42), y2 - 12 * Math.sin(ang + 0.42));
+                ctx.closePath();
+                ctx.fillStyle = strokeCol(o); ctx.fill();
+                ctx.restore();
+            }
+            if (cfg.labels && o.labelVisible !== false && (o.type === 'segment' || o.type === 'secant' ||
+                o.type === 'tangent' || o.type === 'line' || o.type === 'vector')) {
+                const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+                labelText(o.name, mx, my, o.color, isSel(o));
+            }
+        }
+        function drawCircle(o) {
+            if (!o._c) return;
+            const [cx, cy] = w2s(o._c.x, o._c.y);
+            const r = o._r * view.scale;
+            if (r < 0.4) return;
+            ctx.save();
+            ctx.lineWidth = lineW(o);
+            ctx.strokeStyle = strokeCol(o);
+            if (o.derived) {
+                ctx.setLineDash([7, 4]);
+            }
+            ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+            ctx.restore();
+            if (cfg.labels && o.labelVisible !== false) {
+                const ang = -Math.PI / 4;
+                labelText(o.name + (o.derived === 'incircle' ? ' (内切)' : o.derived === 'circumcircle' ? ' (外接)' : ''),
+                    cx + r * Math.cos(ang), cy + r * Math.sin(ang), o.color, isSel(o));
+            }
+        }
+        function drawPolygon(o) {
+            if (!o._pts || o._pts.length < 3) return;
+            const pts = o._pts.map(p => w2s(p.x, p.y));
+            ctx.save();
+            ctx.beginPath();
+            pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]));
+            ctx.closePath();
+            const col = isSel(o) ? SEL : o.color;
+            ctx.fillStyle = hexA(col, 0.11); ctx.fill();
+            ctx.lineWidth = lineW(o); ctx.lineJoin = 'round';
+            ctx.strokeStyle = col; ctx.stroke();
+            ctx.restore();
+            if (cfg.labels && o.labelVisible !== false) {
+                const cx = pts.reduce((s, p) => s + p[0], 0) / pts.length;
+                const cy = pts.reduce((s, p) => s + p[1], 0) / pts.length;
+                labelText(o.name + ' = ' + fmt(polyArea(o._pts)), cx, cy, o.color, isSel(o));
+            }
+        }
+        function drawCurve(o) {
+            if (!o._pts || !o._pts.length) return;
+            ctx.save();
+            ctx.lineWidth = lineW(o);
+            ctx.strokeStyle = strokeCol(o);
+            ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+            ctx.beginPath();
+            let started = false;
+            for (const p of o._pts) {
+                const [sx, sy] = w2s(p.x, p.y);
+                if (!isFinite(sx) || !isFinite(sy)) { started = false; continue; }
+                if (!started) { ctx.moveTo(sx, sy); started = true; }
+                else ctx.lineTo(sx, sy);
+            }
+            ctx.stroke();
+            if (o._pts2 && o._pts2.length) {
+                ctx.beginPath();
+                started = false;
+                for (const p of o._pts2) {
+                    const [sx, sy] = w2s(p.x, p.y);
+                    if (!started) { ctx.moveTo(sx, sy); started = true; }
+                    else ctx.lineTo(sx, sy);
+                }
+                ctx.stroke();
+            }
+            ctx.restore();
+
+            if (o.type === 'ellipse' || o.type === 'parabola') {
+                const fs = o.type === 'ellipse' ? [o.f1, o.f2] : [o.vertex, o.focus];
+                ctx.save(); ctx.fillStyle = '#d81b60';
+                for (const fid of fs) {
+                    const f = getPt(fid);
+                    if (!f) continue;
+                    const [sx, sy] = w2s(f.x, f.y);
+                    ctx.beginPath(); ctx.arc(sx, sy, 3, 0, Math.PI * 2); ctx.fill();
+                }
+                ctx.restore();
+            }
+        }
+        function drawAngle(o) {
+            if (!o._vertex) return;
+            const [vx, vy] = w2s(o._vertex.x, o._vertex.y);
+            const [ax, ay] = w2s(o._a.x, o._a.y);
+            const [cx, cy] = w2s(o._c.x, o._c.y);
+            const rPx = Math.max(26, Math.min(72, o._r * view.scale));
+            const a1 = Math.atan2(ay - vy, ax - vx);
+            const a2 = Math.atan2(cy - vy, cx - vx);
+            let diff = a2 - a1;
+            while (diff <= -Math.PI) diff += Math.PI * 2;
+            while (diff > Math.PI) diff -= Math.PI * 2;
+            const col = isSel(o) ? SEL : o.color;
+            ctx.save();
+            ctx.beginPath();
+            if (diff >= 0) ctx.arc(vx, vy, rPx, a1, a1 + diff);
+            else ctx.arc(vx, vy, rPx, a1 + diff, a1);
+            ctx.strokeStyle = col; ctx.lineWidth = 1.9; ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(vx, vy);
+            if (diff >= 0) ctx.arc(vx, vy, rPx, a1, a1 + diff);
+            else ctx.arc(vx, vy, rPx, a1 + diff, a1);
+            ctx.closePath();
+            ctx.fillStyle = hexA(col, 0.14); ctx.fill();
+            ctx.restore();
+            const mid = a1 + diff / 2;
+            labelText(fmtAngle(Math.abs(o._angle)),
+                vx + (rPx + 24) * Math.cos(mid), vy + (rPx + 24) * Math.sin(mid), col, isSel(o), 12);
+        }
+        function drawDistance(o) {
+            if (!o._A) return;
+            const [x1, y1] = w2s(o._A.x, o._A.y);
+            const [x2, y2] = w2s(o._B.x, o._B.y);
+            labelText((cfg.labels && o.labelVisible !== false ? o.name + ' = ' : '') + fmt(o._len),
+                (x1 + x2) / 2, (y1 + y2) / 2 - 12, isSel(o) ? SEL : o.color, isSel(o), 12);
+        }
+        function drawText(o) {
+            if (o._x == null) return;
+            const [x, y] = w2s(o._x, o._y);
+            ctx.save();
+            ctx.font = (o.fontSize || 14) + 'px "PingFang SC",system-ui,sans-serif';
+            ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+            ctx.fillStyle = isSel(o) ? SEL : (o.color || '#202124');
+            String(o.text || '').split('\n').forEach((ln, i) => ctx.fillText(ln, x + 6, y + i * 18));
+            ctx.restore();
+        }
+        function drawSlider(o) {
+            const sx = o.x, sy = o.y;
+            if (sx < -240 || sx > W + 20 || sy < -30 || sy > H + 30) return;
+            const width = 180, hh = 8;
+            const sel = isSel(o);
+            ctx.save();
+            ctx.font = '600 12px "PingFang SC",system-ui,sans-serif';
+            ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+            ctx.fillStyle = sel ? '#e65100' : o.color;
+            ctx.fillText(o.name + ' = ' + fmt(o.value, 2), sx, sy - 6);
+            ctx.fillStyle = '#e8eaed';
+            ctx.fillRect(sx, sy, width, hh);
+            const ratio = (o.value - o.min) / (o.max - o.min);
+            ctx.fillStyle = sel ? SEL : '#1a73e8';
+            ctx.fillRect(sx, sy, width * ratio, hh);
+            const hx = sx + width * ratio;
+            ctx.beginPath(); ctx.arc(hx, sy + hh / 2, 8, 0, Math.PI * 2);
+            ctx.fillStyle = '#fff'; ctx.fill();
+            ctx.lineWidth = 2.2; ctx.strokeStyle = sel ? SEL : o.color; ctx.stroke();
+            ctx.font = '10px system-ui,sans-serif';
+            ctx.fillStyle = '#80868b';
+            ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+            ctx.fillText(fmt(o.min), sx, sy + hh + 3);
+            ctx.textAlign = 'right';
+            ctx.fillText(fmt(o.max), sx + width, sy + hh + 3);
+            ctx.restore();
+        }
+        function drawLocus(o) {
+            if (!o._samples || o._samples.length < 2) return;
+            ctx.save();
+            ctx.lineWidth = lineW(o, 2.2);
+            ctx.strokeStyle = isSel(o) ? SEL : o.color;
+            ctx.globalAlpha = isSel(o) ? 1 : 0.9;
+            ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+            ctx.beginPath();
+            let started = false;
+            for (const p of o._samples) {
+                const [sx, sy] = w2s(p.x, p.y);
+                if (!started) { ctx.moveTo(sx, sy); started = true; }
+                else ctx.lineTo(sx, sy);
+            }
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        function drawPending() {
+            if (!pending.length) return;
+            const [mx, my] = [mouse.sx, mouse.sy];
+            ctx.save();
+            ctx.setLineDash([6, 5]);
+            ctx.strokeStyle = 'rgba(26,115,232,.8)';
+            ctx.lineWidth = 1.6;
+            const t = currentTool;
+            if (t === 'polygon') {
+                const pts = pending.filter(p => p.type === 'point');
+                if (pts.length) {
+                    ctx.beginPath();
+                    pts.forEach((p, i) => {
+                        const [x, y] = w2s(p.x, p.y);
+                        i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+                    });
+                    ctx.lineTo(mx, my);
+                    if (pts.length >= 2) {
+                        const [fx, fy] = w2s(pts[0].x, pts[0].y);
+                        ctx.moveTo(mx, my); ctx.lineTo(fx, fy);
+                    }
+                    ctx.stroke();
+                }
+            } else if (t === 'circle') {
+                const c = pending[0];
+                if (c && c.type === 'point') {
+                    const [cx, cy] = w2s(c.x, c.y);
+                    const r = Math.hypot(mx - cx, my - cy);
+                    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(mx, my); ctx.stroke();
+                }
+            } else if (t === 'angle' || t === 'angleBisector') {
+                const pts = pending.filter(p => p.type === 'point');
+                if (pts.length === 1) {
+                    const [x, y] = w2s(pts[0].x, pts[0].y);
+                    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(mx, my); ctx.stroke();
+                } else if (pts.length === 2) {
+                    const [x1, y1] = w2s(pts[0].x, pts[0].y);
+                    const [x2, y2] = w2s(pts[1].x, pts[1].y);
+                    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.lineTo(mx, my); ctx.stroke();
+                }
+            } else if (t === 'perpendicular' || t === 'parallel') {
+                if (pending.length === 1) {
+                    const o = pending[0];
+                    if (o._p1) {
+                        const [x1, y1] = w2s(o._p1.x, o._p1.y);
+                        const [x2, y2] = w2s(o._p2.x, o._p2.y);
+                        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+                    }
+                }
+            } else {
+                const last = pending[pending.length - 1];
+                if (last && last.type === 'point') {
+                    const [x, y] = w2s(last.x, last.y);
+                    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(mx, my); ctx.stroke();
+                }
+            }
+            ctx.restore();
+        }
+
+        function draw() {
+            ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+            ctx.clearRect(0, 0, W, H);
+            if (cfg.grid) drawGrid();
+            if (cfg.axes) drawAxes();
+
+            const vis = objects.filter(o => o.visible && o.valid !== false);
+            for (const o of vis) if (o.type === 'polygon') drawPolygon(o);
+            for (const o of vis) if (o.type === 'circle') drawCircle(o);
+            for (const o of vis) if (o.type === 'ellipse' || o.type === 'parabola' ||
+                o.type === 'hyperbola' || o.type === 'func') drawCurve(o);
+            for (const o of vis) if (o.type === 'locus') drawLocus(o);
+            for (const o of vis) if (['segment', 'line', 'ray', 'vector', 'secant',
+                'perpendicular', 'parallel', 'perpBisector',
+                'angleBisector', 'tangent'].includes(o.type)) drawStraight(o);
+            for (const o of vis) if (o.type === 'angle') drawAngle(o);
+            for (const o of vis) if (o.type === 'distance') drawDistance(o);
+            for (const o of vis) if (o.type === 'slider') drawSlider(o);
+
+            drawTrails();
+            drawPending();
+
+            for (const o of vis) if (o.type === 'point') drawPoint(o);
+            for (const o of vis) if (o.type === 'text') drawText(o);
+        }
+
+        /* ==============================================================
+           命中
+           ============================================================== */
+        function hitTest(sx, sy) {
+            for (const o of objects) {
+                if (!o.visible || o.type !== 'slider') continue;
+                if (sx > o.x - 12 && sx < o.x + 192 && sy > o.y - 18 && sy < o.y + 28) return o;
+            }
+            let best = null, bestD = 15;
+            for (const o of objects) {
+                if (!o.visible || o.type !== 'point' || o.valid === false) continue;
+                const [px, py] = w2s(o.x, o.y);
+                const d = Math.hypot(px - sx, py - sy);
+                if (d < bestD) { bestD = d; best = o; }
+            }
+            if (best) return best;
+            for (const o of objects) {
+                if (!o.visible || o.type !== 'text' || o._x == null) continue;
+                const [px, py] = w2s(o._x, o._y);
+                if (sx > px && sx < px + 240 && Math.abs(sy - py) < 18) return o;
+            }
+            bestD = 9;
+            for (const o of objects) {
+                if (!o.visible || o.valid === false) continue;
+                if (['point', 'text', 'slider'].includes(o.type)) continue;
+                let d = Infinity;
+                if (o.type === 'circle' && o._c) {
+                    const [cx, cy] = w2s(o._c.x, o._c.y);
+                    d = Math.abs(Math.hypot(cx - sx, cy - sy) - o._r * view.scale);
+                } else if (o._p1 && o._p2) {
+                    const a = w2s(o._p1.x, o._p1.y), b = w2s(o._p2.x, o._p2.y);
+                    if (o.type === 'segment' || o.type === 'vector' || o.type === 'secant') {
+                        d = segDistPx([sx, sy], a, b);
+                    } else if (o.type === 'ray') {
+                        const dx = b[0] - a[0], dy = b[1] - a[1];
+                        const t = ((sx - a[0]) * dx + (sy - a[1]) * dy) / (dx * dx + dy * dy || 1);
+                        d = t >= 0 ? lineDistPx([sx, sy], a, b) : Math.hypot(sx - a[0], sy - a[1]);
+                    } else d = lineDistPx([sx, sy], a, b);
+                } else if (o.type === 'polygon' && o._pts) {
+                    const pts = o._pts.map(p => w2s(p.x, p.y));
+                    for (let i = 0; i < pts.length; i++)
+                        d = Math.min(d, segDistPx([sx, sy], pts[i], pts[(i + 1) % pts.length]));
+                } else if (o._pts) {
+                    for (const p of o._pts) {
+                        const [px, py] = w2s(p.x, p.y);
+                        const dd = Math.hypot(px - sx, py - sy);
+                        if (dd < d) d = dd;
+                    }
+                    if (o._pts2) for (const p of o._pts2) {
+                        const [px, py] = w2s(p.x, p.y);
+                        const dd = Math.hypot(px - sx, py - sy);
+                        if (dd < d) d = dd;
+                    }
+                } else if (o.type === 'angle' && o._vertex) {
+                    const [vx, vy] = w2s(o._vertex.x, o._vertex.y);
+                    d = Math.abs(Math.hypot(sx - vx, sy - vy) - Math.min(72, o._r * view.scale));
+                } else if (o.type === 'distance' && o._A) {
+                    const a = w2s(o._A.x, o._A.y), b = w2s(o._B.x, o._B.y);
+                    d = segDistPx([sx, sy], a, b);
+                } else if (o.type === 'locus' && o._samples) {
+                    for (let i = 0; i < o._samples.length - 1; i++) {
+                        const a = w2s(o._samples[i].x, o._samples[i].y);
+                        const b = w2s(o._samples[i + 1].x, o._samples[i + 1].y);
+                        d = Math.min(d, segDistPx([sx, sy], a, b));
+                    }
+                }
+                if (d < bestD) { bestD = d; best = o; }
+            }
+            return best;
+        }
+
+        /* ==============================================================
+           撤销 / 重做
+           ============================================================== */
+        function serialize() {
+            const cloned = objects.map(o => {
+                const c = Object.assign({}, o);
+                if (c.trail && c.trail.length > 150) c.trail = c.trail.slice(-150);
+                return c;
+            });
+            return JSON.stringify({ objects: cloned, idSeq, selectedId });
+        }
+        function pushUndo() {
+            undoStack.push(serialize());
+            if (undoStack.length > MAX_UNDO) undoStack.shift();
+            redoStack.length = 0;
+        }
+        function restore(str) {
+            try {
+                const d = JSON.parse(str);
+                objects = (d.objects || []).map(o => {
+                    if (!o.trail) o.trail = [];
+                    if (o.bounceDir == null) o.bounceDir = 1;
+                    return o;
+                });
+                idSeq = d.idSeq || (objects.reduce((m, o) => Math.max(m, o.id), 0) + 1);
+                selectedId = d.selectedId || null;
+                pending = []; hoverId = null; dragState = null;
+                evaluateAll();
+                updatePanel();
+                draw();
+            } catch (e) { }
+        }
+        function undo() { if (!undoStack.length) return; redoStack.push(serialize()); restore(undoStack.pop()); toast('已撤销'); }
+        function redo() { if (!redoStack.length) return; undoStack.push(serialize()); restore(redoStack.pop()); toast('已重做'); }
+
+        /* ==============================================================
+           对象管理
+           ============================================================== */
+        function removeObject(id) {
+            const toDel = new Set([id]);
+            let changed = true;
+            while (changed) {
+                changed = false;
+                for (const o of objects) {
+                    if (toDel.has(o.id)) continue;
+                    for (const p of refsOf(o)) {
+                        if (toDel.has(p)) { toDel.add(o.id); changed = true; break; }
+                    }
+                }
+            }
+            objects = objects.filter(o => !toDel.has(o.id));
+            if (selectedId != null && toDel.has(selectedId)) selectedId = null;
+            if (hoverId != null && toDel.has(hoverId)) hoverId = null;
+            pending = pending.filter(o => !toDel.has(o.id));
+            evaluateAll(); updatePanel(); draw();
+        }
+        function clearAll() {
+            if (!objects.length) return;
+            pushUndo();
+            objects = []; selectedId = null; hoverId = null; pending = []; idSeq = 1;
+            updatePanel(); draw(); toast('已清空画布');
+        }
+
+        /* ==============================================================
+           工具
+           ============================================================== */
+        const HINTS = {
+            move: '拖动任意点：自由点直接移动 · 路径动点手动调位 · 从动点无法直接拖',
+            point: '点击空白处创建自由点',
+            animPoint: '★ 点击一条路径（圆/线段/直线/曲线/函数图/多边形）创建沿路径运动的动点',
+            trace: '★ 点击任意点（含中点/交点等从动点）开启 / 关闭它的轨迹追踪',
+            locus: '★ 先点一个动点或从动点，再点一个滑块：生成该点的完整轨迹曲线',
+            segment: '依次点击两点创建线段',
+            line: '依次点击两点创建直线',
+            ray: '先点端点，再点射线上另一点',
+            vector: '先点起点，再点终点创建向量',
+            circle: '先点圆心，再点圆周上一点',
+            polygon: '依次点击顶点，点回第一个顶点或双击完成',
+            circumcircle: '★ 点击一个多边形：生成过其前三个顶点的外接圆（虚线）',
+            incircle: '★ 点击一个三角形：生成其内切圆（虚线，需正好 3 个顶点）',
+            midpoint: '点击两点取中点（中点会随两点移动，可开启轨迹追踪）',
+            nDivi: '点击两点，然后输入等分数 n',
+            intersect: '依次点击两个对象求交点',
+            perpendicular: '先点一条线，再点一个点作垂线',
+            parallel: '先点一条线，再点一个点作平行线',
+            perpBisector: '点击两点，作垂直平分线',
+            angleBisector: '依次点击三点 A-B-C（B 为顶点）',
+            tangent: '点击圆 / 曲线 / 函数图像，在该处创建切线',
+            secant: '点击两点创建割线（虚线）',
+            func: '点击画布位置，输入函数表达式（如 x^2/3）',
+            ellipse: '依次点击 F1、F2、椭圆上一点 P',
+            parabola: '依次点击顶点 V 和焦点 F',
+            hyperbola: '依次点击 F1、F2、双曲线上一点 P',
+            angle: '依次点击三点 A-B-C 测量角度',
+            distance: '点击两点测量距离',
+            text: '点击画布位置，输入文本',
+            delete: '点击对象删除（依赖对象一并删除）'
+        };
+        function setTool(name) {
+            currentTool = name;
+            pending = [];
+            document.querySelectorAll('.tool[data-tool]').forEach(b => {
+                b.classList.toggle('active', b.dataset.tool === name);
+            });
+            canvas.style.cursor = (name === 'move') ? 'default' : 'crosshair';
+            hintEl.textContent = HINTS[name] || '';
+            draw();
+        }
+
+        function toolPoint(m) {
+            const near = findPointNear(m.sx, m.sy);
+            if (near) { selectedId = near.id; updatePanel(); draw(); return; }
+            pushUndo();
+            const [wx, wy] = s2w(m.sx, m.sy);
+            const p = makePoint(wx, wy);
+            selectedId = p.id;
+            evaluateAll(); updatePanel(); draw();
+        }
+
+        function toolAnimPoint(m) {
+            const hit = hitTest(m.sx, m.sy);
+            if (!hit) { toast('请点击一条路径（圆/线段/直线/曲线等）'); return; }
+            const pathTypes = ['circle', 'segment', 'line', 'ray', 'vector', 'func', 'ellipse',
+                'parabola', 'hyperbola', 'polygon'];
+            if (!pathTypes.includes(hit.type)) { toast('该对象不是有效路径'); return; }
+            pushUndo();
+            const p = makePoint(0, 0, {
+                free: false, pathId: hit.id, t: 0,
+                animating: true, animSpeed: 1, direction: 1,
+                showTrail: true, color: COL.anim, size: 5.5
+            });
+            p.name = autoName('point');
+            selectedId = p.id;
+            evaluateAll(); updatePanel(); draw();
+            toast('动点 ' + p.name + ' 已创建，正沿 ' + hit.name + ' 运动，轨迹已记录');
+        }
+
+        function toolTrace(m) {
+            const hit = hitTest(m.sx, m.sy);
+            if (!hit) { toast('请点击一个点'); return; }
+            if (hit.type !== 'point') { toast('请点击点对象'); return; }
+            pushUndo();
+            hit.showTrail = !hit.showTrail;
+            if (!hit.showTrail) hit.trail = [];
+            updatePanel(); draw();
+            toast(hit.name + (hit.showTrail ? ' 已开启轨迹追踪' : ' 已关闭轨迹追踪'));
+        }
+
+        function toolLocus(m) {
+            const hit = hitTest(m.sx, m.sy);
+            if (!hit) { toast('请点击对象'); return; }
+            if (pending.length === 0) {
+                if (hit.type !== 'point') { toast('第一个点击请选择一个点（动点或从动点）'); return; }
+                pending.push(hit);
+                evaluateAll(); draw();
+                return;
+            }
+            if (hit.type !== 'slider') { toast('第二个点击请选择一个滑块'); return; }
+            pushUndo();
+            const P = pending[0];
+            const loc = makeGeneric('locus', { point: P.id, driver: hit.id }, { color: COL.locus });
+            computeLocus(loc);
+            selectedId = loc.id;
+            pending = [];
+            evaluateAll(); updatePanel(); draw();
+            toast('轨迹线 ' + loc.name + ' 已创建 · ' + (loc._samples ? loc._samples.length : 0) + ' 采样点');
+        }
+
+        function toolTwoPoints(m, type) {
+            if (pending.length === 0) {
+                const p = getOrCreatePoint(m.sx, m.sy);
+                pending.push(p);
+                evaluateAll(); updatePanel(); draw();
+                return;
+            }
+            const p1 = pending[0];
+            const p2 = getOrCreatePoint(m.sx, m.sy);
+            if (p1 === p2) { toast('两点不能重合'); return; }
+            pushUndo();
+            if (type === 'circle') makeCircle(p1, p2);
+            else if (type === 'midpoint') {
+                const mp = makePoint(0, 0, { free: false, parents: [p1.id, p2.id], rule: 'midpoint', color: '#d81b60' });
+                mp.showTrail = true;
+                selectedId = mp.id;
+            } else if (type === 'perpBisector') {
+                makeGeneric('perpBisector', { a: p1.id, b: p2.id }, { color: COL.derived });
+            } else if (type === 'distance') {
+                makeGeneric('distance', { a: p1.id, b: p2.id }, { color: COL.derived });
+            } else if (type === 'nDivi') {
+                const n = parseInt(prompt('等分数 n =', '4'), 10);
+                if (isNaN(n) || n < 2) { toast('请输入不小于2的整数'); return; }
+                for (let i = 1; i < n; i++) {
+                    const t = i / n;
+                    const mp = makePoint(0, 0, {
+                        free: false, parents: [p1.id, p2.id], rule: 'expr',
+                        color: '#d81b60', name: autoName('point')
+                    });
+                    mp._fx = () => p1.x + (p2.x - p1.x) * t;
+                    mp._fy = () => p1.y + (p2.y - p1.y) * t;
+                }
+                toast('已创建 ' + (n - 1) + ' 个等分点');
+            } else if (type === 'secant') {
+                makeLine('secant', p1, p2);
+            } else {
+                makeLine(type, p1, p2);
+            }
+            pending = [];
+            evaluateAll(); updatePanel(); draw();
+        }
+
+        function toolThreePoints(m, type) {
+            if (pending.length < 3) {
+                const p = getOrCreatePoint(m.sx, m.sy);
+                if (pending.length && pending[pending.length - 1] === p) {
+                    toast('不能连续点击同一个点'); return;
+                }
+                pending.push(p);
+                evaluateAll(); draw();
+                if (pending.length === 3) {
+                    pushUndo();
+                    const [A, B, C] = pending;
+                    if (type === 'angle') {
+                        const o = makeGeneric('angle', { a: A.id, b: B.id, c: C.id }, { color: COL.angle });
+                        o.name = autoName('angle');
+                        selectedId = o.id;
+                    } else {
+                        makeGeneric('angleBisector', { a: A.id, b: B.id, c: C.id }, { color: COL.derived });
+                    }
+                    pending = [];
+                    evaluateAll(); updatePanel(); draw();
+                }
+            }
+        }
+
+        function toolIntersect(m) {
+            const hit = hitTest(m.sx, m.sy);
+            if (!hit || hit.type === 'point' || hit.type === 'text' || hit.type === 'slider') {
+                toast('请点击曲线或直线'); return;
+            }
+            if (pending.length === 0) { pending.push(hit); evaluateAll(); draw(); return; }
+            const o1 = pending[0];
+            if (o1 === hit) { toast('请点击两个不同对象'); return; }
+            const pts = computeIntersections(o1.id, hit.id);
+            if (!pts.length) { toast('没有交点'); pending = []; draw(); return; }
+            pushUndo();
+            pts.forEach((pt, i) => {
+                const np = makePoint(pt.x, pt.y, {
+                    free: false, parents: [o1.id, hit.id], rule: 'intersect', branch: i, color: '#d81b60'
+                });
+                np.showTrail = true;
+            });
+            pending = [];
+            evaluateAll(); updatePanel(); draw();
+            toast('已创建 ' + pts.length + ' 个交点（轨迹已开启）');
+        }
+
+        function toolLineAndPoint(m, type) {
+            if (pending.length === 0) {
+                const hit = hitTest(m.sx, m.sy);
+                if (hit && (hit._p1 || ['segment', 'line', 'ray', 'vector', 'secant',
+                    'perpBisector', 'perpendicular', 'parallel', 'angleBisector'].includes(hit.type))) {
+                    pending.push(hit); evaluateAll(); draw();
+                } else {
+                    toast('请先点击一条直线或线段');
+                }
+                return;
+            }
+            const base = pending[0];
+            const p = getOrCreatePoint(m.sx, m.sy);
+            pushUndo();
+            makeGeneric(type, { line: base.id, point: p.id },
+                { color: type === 'perpendicular' ? '#00695c' : '#3f51b5' });
+            pending = [];
+            evaluateAll(); updatePanel(); draw();
+        }
+
+        function toolPolygon(m, dbl) {
+            const nearFirst = pending.length >= 3 && findPointNear(m.sx, m.sy) === pending[0];
+            if ((dbl && pending.length >= 3) || nearFirst) { finishPolygon(); return; }
+            const p = getOrCreatePoint(m.sx, m.sy);
+            if (pending.length && pending[pending.length - 1] === p) return;
+            pending.push(p);
+            evaluateAll(); draw();
+        }
+        function finishPolygon() {
+            if (pending.length < 3) { toast('至少需要3个顶点'); return; }
+            pushUndo();
+            const poly = makePolygon(pending);
+            selectedId = poly.id;
+            pending = [];
+            evaluateAll(); updatePanel(); draw();
+            toast('多边形 ' + poly.name + ' 已创建');
+        }
+
+        /* ★ 外接圆工具：点击多边形 */
+        function toolCircumcircle(m) {
+            const hit = hitTest(m.sx, m.sy);
+            if (!hit || hit.type !== 'polygon') {
+                toast('请点击一个多边形'); return;
+            }
+            if (hit._pts && hit._pts.length < 3) {
+                toast('多边形至少 3 个顶点'); return;
+            }
+            // 检查前三点是否共线
+            const A = hit._pts[0], B = hit._pts[1], C = hit._pts[2];
+            const d = 2 * (A.x * (B.y - C.y) + B.x * (C.y - A.y) + C.x * (A.y - B.y));
+            if (Math.abs(d) < 1e-9) {
+                toast('前三个顶点共线，无法确定外接圆'); return;
+            }
+            pushUndo();
+            const c = makeCircle(null, null, {
+                polygonId: hit.id, derived: 'circumcircle',
+                color: COL.circumcircle, width: 2
+            });
+            c.name = autoName('circumcircle');
+            selectedId = c.id;
+            evaluateAll(); updatePanel(); draw();
+            toast('外接圆 ' + c.name + ' 已创建（随多边形变化自动更新）');
+        }
+
+        /* ★ 内切圆工具：点击三角形 */
+        function toolIncircle(m) {
+            const hit = hitTest(m.sx, m.sy);
+            if (!hit || hit.type !== 'polygon') {
+                toast('请点击一个三角形（3 顶点的多边形）'); return;
+            }
+            if (hit._pts && hit._pts.length !== 3) {
+                toast('内切圆只支持三角形（当前多边形有 ' + (hit._pts ? hit._pts.length : 0) + ' 个顶点）');
+                return;
+            }
+            const inc = computeIncircle(hit._pts);
+            if (!inc) { toast('三点共线，无法确定内切圆'); return; }
+            pushUndo();
+            const c = makeCircle(null, null, {
+                polygonId: hit.id, derived: 'incircle',
+                color: COL.incircle, width: 2
+            });
+            c.name = autoName('incircle');
+            selectedId = c.id;
+            evaluateAll(); updatePanel(); draw();
+            toast('内切圆 ' + c.name + ' 已创建 · 半径 r = ' + fmt(inc.r));
+        }
+
+        function toolTangent(m) {
+            const hit = hitTest(m.sx, m.sy);
+            if (!hit) { toast('请点击曲线或圆'); return; }
+            if (!['circle', 'ellipse', 'parabola', 'hyperbola', 'func'].includes(hit.type)) {
+                toast('请点击圆、圆锥曲线或函数图像'); return;
+            }
+            let nearest = null, bestD = Infinity;
+            const [wx, wy] = s2w(m.sx, m.sy);
+            if (hit.type === 'circle' && hit._c) {
+                const dx = wx - hit._c.x, dy = wy - hit._c.y;
+                const d = Math.hypot(dx, dy);
+                if (d > 1e-9) nearest = { x: hit._c.x + hit._r * dx / d, y: hit._c.y + hit._r * dy / d };
+            } else if (hit.type === 'func' && hit._fn) {
+                for (let sx = 0; sx <= W; sx += 2) {
+                    const [wwx] = s2w(sx, 0);
+                    let wyy;
+                    try { wyy = hit._fn([wwx]); } catch (e) { continue; }
+                    if (!isFinite(wyy)) continue;
+                    const [ssx, ssy] = w2s(wwx, wyy);
+                    const d = Math.hypot(ssx - m.sx, ssy - m.sy);
+                    if (d < bestD) { bestD = d; nearest = { x: wwx, y: wyy }; }
+                }
+            } else if (hit._pts) {
+                const pts = hit._pts.concat(hit._pts2 || []);
+                for (const p of pts) {
+                    const d = Math.hypot(p.x - wx, p.y - wy);
+                    if (d < bestD) { bestD = d; nearest = p; }
+                }
+            }
+            if (!nearest) { toast('无法确定切点'); return; }
+            pushUndo();
+            const P = makePoint(nearest.x, nearest.y, {
+                free: false, pathId: hit.id, t: 0, color: '#00695c', size: 4.5, animating: false
+            });
+            P.name = autoName('point');
+            if (hit._pts && hit._pts.length) {
+                let bi = 0, bd = Infinity;
+                for (let i = 0; i < hit._pts.length; i++) {
+                    const d = (hit._pts[i].x - nearest.x) ** 2 + (hit._pts[i].y - nearest.y) ** 2;
+                    if (d < bd) { bd = d; bi = i; }
+                }
+                P.t = bi / hit._pts.length;
+            } else if (hit.type === 'circle' && hit._c) {
+                P.t = (Math.atan2(nearest.y - hit._c.y, nearest.x - hit._c.x) / (Math.PI * 2) + 1) % 1;
+            }
+            computeObj(P);
+            makeGeneric('tangent', { curve: hit.id, point: P.id }, { color: COL.tangent });
+            evaluateAll(); updatePanel(); draw();
+            toast('已创建切线与切点 ' + P.name);
+        }
+
+        function toolFunc(m) {
+            const expr = prompt('输入函数表达式 f(x) =', 'x^2 / 3 - 1');
+            if (!expr) return;
+            const fn = compileFn(expr, ['x']);
+            if (!fn) { toast('表达式无法解析'); return; }
+            pushUndo();
+            const o = makeGeneric('func', { expr, name: autoName('func') }, { color: COL.func });
+            o._fn = fn;
+            evaluateAll(); updatePanel(); draw();
+            toast('函数 ' + o.name + '(x) = ' + expr + ' 已创建');
+        }
+
+        function toolEllipse(m) {
+            if (pending.length < 3) {
+                const p = getOrCreatePoint(m.sx, m.sy);
+                if (pending.length && pending[pending.length - 1] === p) return;
+                pending.push(p);
+                evaluateAll(); draw();
+                if (pending.length === 3) {
+                    pushUndo();
+                    const [F1, F2, P] = pending;
+                    makeGeneric('ellipse', { f1: F1.id, f2: F2.id, through: P.id }, { color: COL.conic });
+                    pending = [];
+                    evaluateAll(); updatePanel(); draw();
+                    toast('椭圆已创建');
+                }
+            }
+        }
+        function toolParabola(m) {
+            if (pending.length < 2) {
+                const p = getOrCreatePoint(m.sx, m.sy);
+                if (pending.length && pending[pending.length - 1] === p) return;
+                pending.push(p);
+                evaluateAll(); draw();
+                if (pending.length === 2) {
+                    pushUndo();
+                    const [V, F] = pending;
+                    makeGeneric('parabola', { vertex: V.id, focus: F.id }, { color: COL.conic });
+                    pending = [];
+                    evaluateAll(); updatePanel(); draw();
+                    toast('抛物线已创建');
+                }
+            }
+        }
+        function toolHyperbola(m) {
+            if (pending.length < 3) {
+                const p = getOrCreatePoint(m.sx, m.sy);
+                if (pending.length && pending[pending.length - 1] === p) return;
+                pending.push(p);
+                evaluateAll(); draw();
+                if (pending.length === 3) {
+                    pushUndo();
+                    const [F1, F2, P] = pending;
+                    makeGeneric('hyperbola', { f1: F1.id, f2: F2.id, through: P.id }, { color: COL.conic });
+                    pending = [];
+                    evaluateAll(); updatePanel(); draw();
+                    toast('双曲线已创建');
+                }
+            }
+        }
+        function toolText(m) {
+            const [wx, wy] = s2w(m.sx, m.sy);
+            const txt = prompt('输入文本内容：', '');
+            if (!txt) return;
+            pushUndo();
+            const p = makePoint(wx, wy, { color: '#5f6368', size: 3 });
+            p.labelVisible = false;
+            objects.push({
+                id: idSeq++, type: 'text', name: autoName('text'), point: p.id,
+                text: txt, color: '#202124', fontSize: 14,
+                visible: true, labelVisible: false, _x: wx, _y: wy
+            });
+            evaluateAll(); updatePanel(); draw();
+        }
+        function toolDelete(m) {
+            const hit = hitTest(m.sx, m.sy);
+            if (!hit) { toast('未点击到对象'); return; }
+            pushUndo();
+            const nm = hit.name;
+            removeObject(hit.id);
+            toast('已删除 ' + nm);
+        }
+
+        /* ==============================================================
+           滑块交互
+           ============================================================== */
+        function sliderHit(o, sx, sy) {
+            return sx >= o.x - 14 && sx <= o.x + 194 && sy >= o.y - 18 && sy <= o.y + 28;
+        }
+        function updateSlider(o, sx) {
+            const ratio = clamp((sx - o.x) / 180, 0, 1);
+            const nv = o.min + (o.max - o.min) * ratio;
+            o.value = Math.round(nv / o.step) * o.step;
+            if (o.value < o.min) o.value = o.min;
+            if (o.value > o.max) o.value = o.max;
+        }
+
+        /* ==============================================================
+           ★ 关键改进：拖动任意点
+           ============================================================== */
+        canvas.addEventListener('pointerdown', e => {
+            if (e.button !== 0 && e.button !== 1) return;
+            e.preventDefault();
+            try { canvas.setPointerCapture(e.pointerId); } catch (_) { }
+            const r = canvas.getBoundingClientRect();
+            const sx = e.clientX - r.left, sy = e.clientY - r.top;
+            const [wx, wy] = s2w(sx, sy);
+            mouse = { sx, sy, wx, wy };
+
+            for (const o of objects) {
+                if (o.type === 'slider' && o.visible && sliderHit(o, sx, sy)) {
+                    pushUndo();
+                    dragState = { mode: 'slider', obj: o };
+                    updateSlider(o, sx);
+                    evaluateAll(); recordAllTrails(); updatePanel(true); draw();
+                    return;
+                }
+            }
+            if (e.button === 1 || spaceDown) {
+                dragState = { mode: 'pan', sx, sy, vx: view.x, vy: view.y };
+                canvas.style.cursor = 'grabbing';
+                return;
+            }
+            const tool = currentTool;
+
+            if (tool === 'move') {
+                const hit = hitTest(sx, sy);
+                if (hit && hit.type === 'point') {
+                    if (hit.free) {
+                        /* 自由点：直接拖 */
+                        pushUndo();
+                        dragState = { mode: 'point', obj: hit, ox: hit.x - wx, oy: hit.y - wy };
+                        selectedId = hit.id;
+                        updatePanel(); draw();
+                    } else if (hit.pathId != null) {
+                        /* 路径上的动点：暂停运动 + 手动调 t */
+                        pushUndo();
+                        dragState = { mode: 'onPath', obj: hit, wasAnimating: hit.animating };
+                        hit.animating = false;   // 手动拖动时暂停自动运动
+                        const t = closestTOnPath(getObj(hit.pathId), wx, wy);
+                        if (t != null) hit.t = t;
+                        selectedId = hit.id;
+                        evaluateAll(); recordAllTrails();
+                        updatePanel(); draw();
+                    } else {
+                        /* 从动点：无法直接拖 */
+                        selectedId = hit.id;
+                        toast(hit.name + ' 由其他对象决定，无法直接拖动');
+                        updatePanel(); draw();
+                    }
+                } else if (hit) {
+                    selectedId = hit.id;
+                    updatePanel(); draw();
+                } else {
+                    selectedId = null;
+                    dragState = { mode: 'pan', sx, sy, vx: view.x, vy: view.y };
+                    updatePanel(); draw();
+                }
+                return;
+            }
+
+            switch (tool) {
+                case 'point': toolPoint({ sx, sy }); break;
+                case 'animPoint': toolAnimPoint({ sx, sy }); break;
+                case 'trace': toolTrace({ sx, sy }); break;
+                case 'locus': toolLocus({ sx, sy }); break;
+                case 'segment': toolTwoPoints({ sx, sy }, 'segment'); break;
+                case 'line': toolTwoPoints({ sx, sy }, 'line'); break;
+                case 'ray': toolTwoPoints({ sx, sy }, 'ray'); break;
+                case 'vector': toolTwoPoints({ sx, sy }, 'vector'); break;
+                case 'secant': toolTwoPoints({ sx, sy }, 'secant'); break;
+                case 'circle': toolTwoPoints({ sx, sy }, 'circle'); break;
+                case 'midpoint': toolTwoPoints({ sx, sy }, 'midpoint'); break;
+                case 'nDivi': toolTwoPoints({ sx, sy }, 'nDivi'); break;
+                case 'perpBisector': toolTwoPoints({ sx, sy }, 'perpBisector'); break;
+                case 'distance': toolTwoPoints({ sx, sy }, 'distance'); break;
+                case 'angle': toolThreePoints({ sx, sy }, 'angle'); break;
+                case 'angleBisector': toolThreePoints({ sx, sy }, 'angleBisector'); break;
+                case 'intersect': toolIntersect({ sx, sy }); break;
+                case 'perpendicular': toolLineAndPoint({ sx, sy }, 'perpendicular'); break;
+                case 'parallel': toolLineAndPoint({ sx, sy }, 'parallel'); break;
+                case 'polygon': toolPolygon({ sx, sy }, false); break;
+                case 'circumcircle': toolCircumcircle({ sx, sy }); break;
+                case 'incircle': toolIncircle({ sx, sy }); break;
+                case 'tangent': toolTangent({ sx, sy }); break;
+                case 'func': toolFunc({ sx, sy }); break;
+                case 'ellipse': toolEllipse({ sx, sy }); break;
+                case 'parabola': toolParabola({ sx, sy }); break;
+                case 'hyperbola': toolHyperbola({ sx, sy }); break;
+                case 'text': toolText({ sx, sy }); break;
+                case 'delete': toolDelete({ sx, sy }); break;
+            }
+        });
+
+        canvas.addEventListener('pointermove', e => {
+            const r = canvas.getBoundingClientRect();
+            const sx = e.clientX - r.left, sy = e.clientY - r.top;
+            const [wx, wy] = s2w(sx, sy);
+            mouse = { sx, sy, wx, wy };
+            coordsEl.textContent = `(${fmt(wx)}, ${fmt(wy)})`;
+
+            if (dragState) {
+                if (dragState.mode === 'point') {
+                    const o = dragState.obj;
+                    o.x = wx + dragState.ox;
+                    o.y = wy + dragState.oy;
+                    evaluateAll();
+                    recordAllTrails();
+                    updatePanel(true);
+                    draw();
+                } else if (dragState.mode === 'onPath') {
+                    /* ★ 拖动路径动点：反求 t */
+                    const o = dragState.obj;
+                    const t = closestTOnPath(getObj(o.pathId), wx, wy);
+                    if (t != null) o.t = t;
+                    evaluateAll();
+                    recordAllTrails();
+                    updatePanel(true);
+                    draw();
+                } else if (dragState.mode === 'pan') {
+                    view.x = dragState.vx - (sx - dragState.sx) / view.scale;
+                    view.y = dragState.vy + (sy - dragState.sy) / view.scale;
+                    draw();
+                } else if (dragState.mode === 'slider') {
+                    updateSlider(dragState.obj, sx);
+                    evaluateAll();
+                    recordAllTrails();
+                    updatePanel(true);
+                    draw();
+                }
+                return;
+            }
+
+            const h = hitTest(sx, sy);
+            const nh = h ? h.id : null;
+            if (nh !== hoverId) { hoverId = nh; draw(); }
+
+            if (currentTool === 'move') {
+                if (h && h.type === 'point' && h.free) canvas.style.cursor = 'grab';
+                else if (h && h.type === 'point' && h.pathId != null) canvas.style.cursor = 'move';
+                else if (h) canvas.style.cursor = 'pointer';
+                else canvas.style.cursor = 'default';
+            } else if (currentTool === 'delete') {
+                canvas.style.cursor = h ? 'pointer' : 'default';
+            } else if (h && h.type === 'slider') {
+                canvas.style.cursor = 'ew-resize';
+            } else {
+                canvas.style.cursor = 'crosshair';
+            }
+            if (pending.length) draw();
+        });
+
+        canvas.addEventListener('pointerup', () => {
+            if (dragState) {
+                if (dragState.mode === 'point' || dragState.mode === 'onPath' || dragState.mode === 'slider') {
+                    evaluateAll(); updatePanel(); draw();
+                }
+                dragState = null;
+                canvas.style.cursor = (currentTool === 'move') ? 'default' : 'crosshair';
+            }
+        });
+        canvas.addEventListener('pointercancel', () => { dragState = null; });
+        canvas.addEventListener('dblclick', () => {
+            if (currentTool === 'polygon' && pending.length >= 3) finishPolygon();
+        });
+        canvas.addEventListener('wheel', e => {
+            e.preventDefault();
+            const r = canvas.getBoundingClientRect();
+            const sx = e.clientX - r.left, sy = e.clientY - r.top;
+            const [wx, wy] = s2w(sx, sy);
+            const f = Math.exp(-e.deltaY * 0.0015);
+            view.scale = clamp(view.scale * f, 3, 1600);
+            view.x = wx - (sx - W / 2) / view.scale;
+            view.y = wy + (sy - H / 2) / view.scale;
+            draw();
+        }, { passive: false });
+        canvas.addEventListener('contextmenu', e => {
+            e.preventDefault();
+            pending = [];
+            if (selectedId != null) { selectedId = null; updatePanel(); }
+            draw();
+        });
+
+        /* ==============================================================
+           播放控制条
+           ============================================================== */
+        const btnPlay = document.getElementById('btnPlay');
+        const icPlay = document.getElementById('icPlay');
+        const icPause = document.getElementById('icPause');
+        function setPlayUI() {
+            if (anim.playing) {
+                btnPlay.classList.remove('paused');
+                icPlay.style.display = 'none';
+                icPause.style.display = '';
+                btnPlay.title = '暂停 (空格)';
+            } else {
+                btnPlay.classList.add('paused');
+                icPlay.style.display = '';
+                icPause.style.display = 'none';
+                btnPlay.title = '播放 (空格)';
+            }
+        }
+        btnPlay.addEventListener('click', () => {
+            anim.playing = !anim.playing;
+            setPlayUI();
+            toast(anim.playing ? '动画播放中' : '动画已暂停');
+        });
+        document.getElementById('btnBack').addEventListener('click', () => {
+            anim.speed = Math.max(0.1, anim.speed - 0.25);
+            spdLbl.textContent = anim.speed.toFixed(2).replace(/0$/, '') + '×';
+        });
+        document.getElementById('btnFwd').addEventListener('click', () => {
+            anim.speed = Math.min(6, anim.speed + 0.25);
+            spdLbl.textContent = anim.speed.toFixed(2).replace(/0$/, '') + '×';
+        });
+        document.getElementById('dirSel').addEventListener('change', e => {
+            const v = parseInt(e.target.value, 10);
+            anim.direction = v;
+            for (const o of objects) {
+                if (o.type === 'point' && o.animating && o.pathId != null) {
+                    o.direction = (v === 2) ? 2 : v;
+                    if (v === 2) o.bounceDir = 1;
+                }
+            }
+            toast(v === 1 ? '正方向运动' : v === -1 ? '反方向运动' : '往复运动');
+        });
+        document.getElementById('btnClearTrails').addEventListener('click', () => {
+            for (const o of objects) if (o.type === 'point') o.trail = [];
+            draw();
+            toast('已清除所有轨迹');
+        });
+
+        /* ==============================================================
+           面板
+           ============================================================== */
+        function typeColor(o) {
+            if (o.type === 'point') return o.color;
+            if (o.type === 'angle' || o.type === 'distance') return '#d93025';
+            return o.color || '#5f6368';
+        }
+        function describe(o) {
+            switch (o.type) {
+                case 'point': {
+                    if (o.pathId != null) {
+                        const p = getObj(o.pathId);
+                        return `路径点 · t=${fmt(o.t, 3)} (在 ${p ? p.name : '?'} 上)` + (o.animating ? ' · 运动中' : '');
+                    }
+                    if (o.rule === 'midpoint') return `中点 = (${fmt(o.x)}, ${fmt(o.y)})`;
+                    if (o.rule === 'intersect') return `交点 = (${fmt(o.x)}, ${fmt(o.y)})`;
+                    if (o.rule === 'expr') return `从动点 = (${fmt(o.x)}, ${fmt(o.y)})`;
+                    if (o.rule === 'incircleCenter') return `内心`;
+                    if (o.rule === 'circumcircleCenter') return `外心`;
+                    return `(${fmt(o.x)}, ${fmt(o.y)})`;
+                }
+                case 'segment': {
+                    const A = getPt(o.a), B = getPt(o.b);
+                    if (!A || !B) return '线段';
+                    return `${A.name}${B.name} = ${fmt(Math.hypot(B.x - A.x, B.y - A.y))}`;
+                }
+                case 'line': {
+                    const A = getPt(o.a), B = getPt(o.b);
+                    if (!A || !B) return '直线';
+                    const dx = B.x - A.x, dy = B.y - A.y;
+                    if (Math.abs(dx) < 1e-9) return `x = ${fmt(A.x)}`;
+                    const m = dy / dx, c = A.y - m * A.x;
+                    return `y = ${fmt(m)}x ${c >= 0 ? '+' : '−'} ${fmt(Math.abs(c))}`;
+                }
+                case 'ray': return `射线 ${getPt(o.a)?.name || '?'}${getPt(o.b)?.name || '?'}`;
+                case 'vector': return `向量 ${getPt(o.a)?.name || '?'}${getPt(o.b)?.name || '?'}`;
+                case 'secant': return `割线 ${getPt(o.a)?.name || '?'}${getPt(o.b)?.name || '?'}`;
+                case 'circle': {
+                    if (o.derived === 'incircle') {
+                        const poly = getObj(o.polygonId);
+                        return `内切圆 of ${poly ? poly.name : '?'} · r=${fmt(o._r || 0)}`;
+                    }
+                    if (o.derived === 'circumcircle') {
+                        const poly = getObj(o.polygonId);
+                        return `外接圆 of ${poly ? poly.name : '?'} · r=${fmt(o._r || 0)}`;
+                    }
+                    const C = getPt(o.center);
+                    if (!C) return '圆';
+                    if (o.through != null) {
+                        const T = getPt(o.through);
+                        return `圆(${C.name}, ${T ? T.name : '?'}) · r=${fmt(o._r || 0)}`;
+                    }
+                    return `圆(${C.name}, ${fmt(o.radius || 0)})`;
+                }
+                case 'polygon': {
+                    const pts = o.pts.map(getPt).filter(Boolean);
+                    return `${pts.map(p => p.name).join('')} · 面积 ${fmt(o._pts ? polyArea(o._pts) : 0)}`;
+                }
+                case 'ellipse':
+                    if (!o._a) return '椭圆';
+                    return `椭圆 · a=${fmt(o._a)} b=${fmt(o._b)}`;
+                case 'parabola':
+                    if (!o._p) return '抛物线';
+                    return `抛物线 · p=${fmt(o._p)}`;
+                case 'hyperbola':
+                    if (!o._a) return '双曲线';
+                    return `双曲线 · a=${fmt(o._a)} b=${fmt(o._b)}`;
+                case 'func': return `f(x) = ${o.expr}`;
+                case 'tangent': return '切线';
+                case 'locus': {
+                    const P = getPt(o.point);
+                    return `轨迹 of ${P ? P.name : '?'} · ${o._samples ? o._samples.length : 0} 点`;
+                }
+                case 'slider': return `参数 = ${fmt(o.value)}`;
+                case 'angle': return `∠ = ${fmtAngle(Math.abs(o._angle || 0))}`;
+                case 'distance': return `距离 = ${fmt(o._len)}`;
+                case 'perpBisector': {
+                    const A = getPt(o.a), B = getPt(o.b);
+                    return `${A ? A.name : '?'}${B ? B.name : '?'} 的垂直平分线`;
+                }
+                case 'angleBisector': {
+                    const A = getPt(o.a), B = getPt(o.b), C = getPt(o.c);
+                    return `∠${A ? A.name : '?'}${B ? B.name : '?'}${C ? C.name : '?'} 的角平分线`;
+                }
+                case 'perpendicular': return '垂线';
+                case 'parallel': return '平行线';
+                case 'text': return String(o.text || '').slice(0, 30);
+                default: return '';
+            }
+        }
+        function updatePanel(listOnly) {
+            listArea.innerHTML = '';
+            if (!objects.length) {
+                listArea.innerHTML = '<div class="empty"><b>◫</b>暂无可显示的对象<br>用左侧工具或输入框开始作图</div>';
+                objCountEl.textContent = '0 个对象';
+                if (!listOnly) renderStyle();
+                return;
+            }
+            const frag = document.createDocumentFragment();
+            for (const o of objects) {
+                const row = document.createElement('div');
+                row.className = 'objRow' + (o.id === selectedId ? ' sel' : '') + (o.visible ? '' : ' hide');
+                const dot = document.createElement('div');
+                dot.className = 'objDot';
+                let cls = '';
+                if (o.type === 'point') {
+                    if (o.animating && o.pathId != null) cls = 'anim';
+                    else if (o.showTrail) cls = 'trail';
+                } else cls = 'sq';
+                dot.innerHTML = `<i class="${cls}" style="background:${typeColor(o)}"></i>`;
+                dot.title = o.visible ? '隐藏' : '显示';
+                dot.addEventListener('click', ev => {
+                    ev.stopPropagation();
+                    pushUndo();
+                    o.visible = !o.visible;
+                    updatePanel(); draw();
+                });
+                const nm = document.createElement('span');
+                nm.className = 'objName';
+                nm.textContent = o.name;
+                const df = document.createElement('span');
+                df.className = 'objDef';
+                df.textContent = describe(o) + (o.type === 'point' && o.showTrail ? '  ●轨迹' : '');
+                row.appendChild(dot); row.appendChild(nm); row.appendChild(df);
+                row.addEventListener('click', () => {
+                    selectedId = (selectedId === o.id) ? null : o.id;
+                    updatePanel(); draw();
+                });
+                frag.appendChild(row);
+            }
+            listArea.appendChild(frag);
+            objCountEl.textContent = objects.length + ' 个对象';
+            if (!listOnly) renderStyle();
+        }
+        function renderStyle() {
+            const o = selectedId != null ? getObj(selectedId) : null;
+            if (!o) { styleArea.classList.remove('show'); return; }
+            styleArea.classList.add('show');
+            styleBody.innerHTML = '';
+
+            if (o.type !== 'slider') {
+                const row1 = document.createElement('div');
+                row1.className = 'styleRow';
+                row1.innerHTML = '<span class="styleLbl">颜色</span>';
+                const sws = document.createElement('div');
+                sws.className = 'swatches';
+                COLOR_POOL.forEach(c => {
+                    const b = document.createElement('div');
+                    b.className = 'sw' + ((o.color || '').toLowerCase() === c.toLowerCase() ? ' on' : '');
+                    b.style.background = c;
+                    b.addEventListener('click', () => {
+                        pushUndo(); o.color = c; renderStyle(); updatePanel(true); draw();
+                    });
+                    sws.appendChild(b);
+                });
+                row1.appendChild(sws);
+                styleBody.appendChild(row1);
+            }
+
+            if (o.type === 'point') {
+                const row2 = document.createElement('div');
+                row2.className = 'styleRow';
+                row2.innerHTML = '<span class="styleLbl">大小</span>';
+                const sl = document.createElement('input');
+                sl.type = 'range'; sl.min = '3'; sl.max = '12'; sl.step = '1';
+                sl.className = 'slider'; sl.value = o.size || 5;
+                sl.addEventListener('input', () => { o.size = parseInt(sl.value, 10); draw(); });
+                row2.appendChild(sl);
+                styleBody.appendChild(row2);
+            } else if (o.type !== 'text' && o.type !== 'slider') {
+                const row2 = document.createElement('div');
+                row2.className = 'styleRow';
+                row2.innerHTML = '<span class="styleLbl">线宽</span>';
+                const sl = document.createElement('input');
+                sl.type = 'range'; sl.min = '1'; sl.max = '7'; sl.step = '1';
+                sl.className = 'slider'; sl.value = o.width || 2;
+                sl.addEventListener('input', () => { o.width = parseInt(sl.value, 10); draw(); });
+                row2.appendChild(sl);
+                styleBody.appendChild(row2);
+            }
+
+            if (o.type === 'point' && o.pathId != null) {
+                const rowS = document.createElement('div');
+                rowS.className = 'styleRow';
+                rowS.innerHTML = '<span class="styleLbl">速度</span>';
+                const sl = document.createElement('input');
+                sl.type = 'range'; sl.min = '0.2'; sl.max = '4'; sl.step = '0.1';
+                sl.className = 'slider'; sl.value = o.animSpeed || 1;
+                sl.addEventListener('input', () => { o.animSpeed = parseFloat(sl.value); });
+                rowS.appendChild(sl);
+                styleBody.appendChild(rowS);
+
+                const rowD = document.createElement('div');
+                rowD.className = 'styleRow';
+                rowD.innerHTML = '<span class="styleLbl">方向</span>';
+                const wrapD = document.createElement('div');
+                wrapD.style.cssText = 'display:flex;gap:4px;flex:1';
+                [['正向', 1], ['反向', -1], ['往复', 2]].forEach(([lab, v]) => {
+                    const b = document.createElement('button');
+                    b.className = 'btnMini' + ((o.direction === v) ? ' on' : '');
+                    b.style.flex = '1';
+                    b.textContent = lab;
+                    b.addEventListener('click', () => {
+                        o.direction = v; if (v === 2) o.bounceDir = 1;
+                        renderStyle(); draw();
+                    });
+                    wrapD.appendChild(b);
+                });
+                rowD.appendChild(wrapD);
+                styleBody.appendChild(rowD);
+
+                const rowR = document.createElement('div');
+                rowR.className = 'styleRow';
+                rowR.innerHTML = '<span class="styleLbl">参数 t</span>';
+                const sl2 = document.createElement('input');
+                sl2.type = 'range'; sl2.min = '0'; sl2.max = '1'; sl2.step = '0.005';
+                sl2.className = 'slider'; sl2.value = o.t;
+                sl2.addEventListener('input', () => {
+                    o.t = parseFloat(sl2.value);
+                    o.animating = false;
+                    evaluateAll(); recordAllTrails(); draw();
+                });
+                rowR.appendChild(sl2);
+                styleBody.appendChild(rowR);
+
+                const rowPlay = document.createElement('div');
+                rowPlay.className = 'styleRow';
+                const btn = document.createElement('button');
+                btn.className = 'btnMini' + (o.animating ? ' on' : '');
+                btn.style.flex = '1';
+                btn.textContent = o.animating ? '⏸ 暂停运动' : '▶ 开始运动';
+                btn.addEventListener('click', () => {
+                    o.animating = !o.animating;
+                    renderStyle(); draw();
+                });
+                rowPlay.appendChild(btn);
+                styleBody.appendChild(rowPlay);
+            }
+
+            if (o.type === 'point') {
+                const row = document.createElement('div');
+                row.className = 'styleRow';
+                const lab = document.createElement('label');
+                lab.className = 'chkRow';
+                lab.style.flex = '1';
+                const cb = document.createElement('input');
+                cb.type = 'checkbox'; cb.checked = o.showTrail;
+                cb.addEventListener('change', () => {
+                    o.showTrail = cb.checked;
+                    if (!cb.checked) o.trail = [];
+                    updatePanel(true); draw();
+                });
+                lab.appendChild(cb);
+                lab.appendChild(document.createTextNode('显示轨迹追踪'));
+                row.appendChild(lab);
+                const btnClr = document.createElement('button');
+                btnClr.className = 'btnMini';
+                btnClr.textContent = '清除';
+                btnClr.addEventListener('click', () => { o.trail = []; draw(); });
+                row.appendChild(btnClr);
+                styleBody.appendChild(row);
+            }
+
+            if (o.type === 'slider') {
+                const row = document.createElement('div');
+                row.className = 'styleRow';
+                row.innerHTML = '<span class="styleLbl">范围</span>';
+                const w = document.createElement('div');
+                w.style.cssText = 'display:flex;gap:4px;flex:1';
+                ['min', 'max'].forEach(k => {
+                    const inp = document.createElement('input');
+                    inp.type = 'number'; inp.value = o[k]; inp.step = '0.5';
+                    inp.style.cssText = 'width:100%;border:1px solid #dadce0;border-radius:4px;padding:3px 6px;font-size:12px';
+                    inp.addEventListener('change', () => { o[k] = parseFloat(inp.value); evaluateAll(); draw(); });
+                    w.appendChild(inp);
+                });
+                row.appendChild(w);
+                styleBody.appendChild(row);
+            }
+
+            const rowLbl = document.createElement('div');
+            rowLbl.className = 'styleRow';
+            const lab2 = document.createElement('label');
+            lab2.className = 'chkRow';
+            const cb2 = document.createElement('input');
+            cb2.type = 'checkbox'; cb2.checked = o.labelVisible !== false;
+            cb2.addEventListener('change', () => { pushUndo(); o.labelVisible = cb2.checked; draw(); });
+            lab2.appendChild(cb2);
+            lab2.appendChild(document.createTextNode('显示标签'));
+            rowLbl.appendChild(lab2);
+            styleBody.appendChild(rowLbl);
+
+            const rowDel = document.createElement('div');
+            rowDel.className = 'styleRow';
+            const db = document.createElement('button');
+            db.textContent = '删除该对象';
+            db.style.cssText = 'flex:1;border:1px solid #f5c2c0;background:#fdf3f2;color:#d93025;border-radius:6px;padding:5px 0;cursor:pointer;font-size:12px;';
+            db.addEventListener('click', () => { pushUndo(); removeObject(o.id); });
+            rowDel.appendChild(db);
+            styleBody.appendChild(rowDel);
+        }
+
+        /* ==============================================================
+           命令
+           ============================================================== */
+        function parsePointLiteral(s) {
+            const m = s.match(/^\(\s*(-?[\d.]+)\s*[,;]\s*(-?[\d.]+)\s*\)$/);
+            if (!m) return null;
+            return { x: parseFloat(m[1]), y: parseFloat(m[2]) };
+        }
+        function executeCommand(raw) {
+            const input = raw.trim();
+            if (!input) return;
+
+            const eq = input.indexOf('=');
+            if (eq > 0) {
+                const lhs = input.slice(0, eq).trim();
+                const rhs = input.slice(eq + 1).trim();
+                const fm = lhs.match(/^([A-Za-z][A-Za-z0-9_]*)\s*\(\s*([A-Za-z])\s*\)$/);
+                if (fm) {
+                    const fname = fm[1], varName = fm[2];
+                    const fn = compileFn(rhs, [varName]);
+                    if (!fn) { toast('表达式无法解析'); return; }
+                    pushUndo();
+                    const ex = objects.find(o => o.name === fname && o.type === 'func');
+                    if (ex) { ex.expr = rhs; ex._fn = fn; }
+                    else {
+                        const o = makeGeneric('func', { expr: rhs, name: fname }, { color: COL.func });
+                        o._fn = fn;
+                    }
+                    evaluateAll(); updatePanel(); draw();
+                    toast(`函数 ${fname}(x) = ${rhs} 已创建`);
+                    return;
+                }
+                const pt = parsePointLiteral(rhs);
+                if (pt && /^[A-Za-z][A-Za-z0-9_]*$/.test(lhs)) {
+                    pushUndo();
+                    const existing = objects.find(o => o.name === lhs && o.type === 'point');
+                    if (existing) { existing.x = pt.x; existing.y = pt.y; existing.free = true; existing.pathId = null; }
+                    else makePoint(pt.x, pt.y, { name: lhs });
+                    evaluateAll(); updatePanel(); draw();
+                    toast(`点 ${lhs} 已创建`);
+                    return;
+                }
+            }
+
+            const m = input.match(/^([A-Za-z\u4e00-\u9fa5]+)\s*[\(（](.*)[\)）]\s*$/);
+            if (!m) { toast('无法识别的命令'); return; }
+            let cmd = m[1];
+            const args = m[2].split(/[,，]/).map(s => s.trim()).filter(Boolean);
+            const alias = {
+                '点': 'Point', '坐标': 'Point', '线段': 'Segment', '直线': 'Line', '射线': 'Ray',
+                '向量': 'Vector', '圆': 'Circle', '多边形': 'Polygon', '中点': 'Midpoint',
+                '交点': 'Intersect', '垂线': 'Perp', '平行线': 'Para', '垂直平分线': 'PerpBis',
+                '角平分线': 'AngBis', '角度': 'Angle', '距离': 'Distance', '切线': 'Tangent',
+                '函数': 'Function', '椭圆': 'Ellipse', '抛物线': 'Parabola', '双曲线': 'Hyperbola',
+                '轨迹': 'Locus', '动点': 'AnimPoint', '追踪': 'Trace', '滑块': 'Slider', '文本': 'Text',
+                '内切圆': 'Incircle', '外接圆': 'Circumcircle'
+            };
+            cmd = alias[cmd] || cmd;
+
+            const resolve = (s) => {
+                if (!s) return null;
+                const pp = parsePointLiteral(s);
+                if (pp) {
+                    const x = parseFloat(pp.x), y = parseFloat(pp.y);
+                    for (const o of objects) if (o.type === 'point' && Math.abs(o.x - x) < 1e-9 && Math.abs(o.y - y) < 1e-9) return o;
+                    return makePoint(x, y);
+                }
+                return objects.find(o => o.name === s);
+            };
+
+            pushUndo();
+            switch (cmd) {
+                case 'Point': {
+                    const p = parsePointLiteral(args.join(','));
+                    if (!p) { toast('用法：点(1,2) 或 A=(1,2)'); undoStack.pop(); return; }
+                    makePoint(p.x, p.y);
+                    break;
+                }
+                case 'AnimPoint': {
+                    const path = resolve(args[0]);
+                    if (!path) { toast('找不到路径对象'); undoStack.pop(); return; }
+                    const P = makePoint(0, 0, {
+                        free: false, pathId: path.id, t: 0, animating: true, animSpeed: 1,
+                        direction: 1, showTrail: true, color: COL.anim
+                    });
+                    P.name = autoName('point');
+                    break;
+                }
+                case 'Trace': {
+                    const p = resolve(args[0]);
+                    if (!p || p.type !== 'point') { toast('请指定一个点'); undoStack.pop(); return; }
+                    p.showTrail = !p.showTrail;
+                    if (!p.showTrail) p.trail = [];
+                    break;
+                }
+                case 'Locus': {
+                    if (args.length < 2) { toast('用法：轨迹(点, 滑块)'); undoStack.pop(); return; }
+                    const P = resolve(args[0]), S = resolve(args[1]);
+                    if (!P || !S || P.type !== 'point' || S.type !== 'slider') { toast('参数无效'); undoStack.pop(); return; }
+                    const loc = makeGeneric('locus', { point: P.id, driver: S.id }, { color: COL.locus });
+                    computeLocus(loc);
+                    break;
+                }
+                case 'Segment': case 'Line': case 'Ray': case 'Vector': {
+                    if (args.length < 2) { toast('需要两个点'); undoStack.pop(); return; }
+                    const A = resolve(args[0]), B = resolve(args[1]);
+                    if (!A || !B || A.type !== 'point' || B.type !== 'point') { toast('参数无效'); undoStack.pop(); return; }
+                    makeLine(cmd.toLowerCase(), A, B);
+                    break;
+                }
+                case 'Circle': {
+                    if (args.length < 2) { toast('需要圆心与半径/圆周点'); undoStack.pop(); return; }
+                    const C = resolve(args[0]);
+                    if (!C || C.type !== 'point') { toast('圆心无效'); undoStack.pop(); return; }
+                    const num = parseFloat(args[1]);
+                    if (isFinite(num) && String(num) === args[1]) { makeCircle(C, num); }
+                    else {
+                        const T = resolve(args[1]);
+                        if (!T || T.type !== 'point') { toast('圆周点无效'); undoStack.pop(); return; }
+                        makeCircle(C, T);
+                    }
+                    break;
+                }
+                case 'Polygon': {
+                    if (args.length < 3) { toast('至少3个顶点'); undoStack.pop(); return; }
+                    const pts = args.map(resolve);
+                    if (pts.some(p => !p || p.type !== 'point')) { toast('顶点无效'); undoStack.pop(); return; }
+                    makePolygon(pts);
+                    break;
+                }
+                case 'Circumcircle': {
+                    const poly = resolve(args[0]);
+                    if (!poly || poly.type !== 'polygon') { toast('需要一个多边形'); undoStack.pop(); return; }
+                    const c = makeCircle(null, null, { polygonId: poly.id, derived: 'circumcircle', color: COL.circumcircle });
+                    c.name = autoName('circumcircle');
+                    break;
+                }
+                case 'Incircle': {
+                    const poly = resolve(args[0]);
+                    if (!poly || poly.type !== 'polygon') { toast('需要一个三角形'); undoStack.pop(); return; }
+                    if (poly._pts && poly._pts.length !== 3) { toast('内切圆只支持三角形'); undoStack.pop(); return; }
+                    const c = makeCircle(null, null, { polygonId: poly.id, derived: 'incircle', color: COL.incircle });
+                    c.name = autoName('incircle');
+                    break;
+                }
+                case 'Midpoint': {
+                    if (args.length < 2) { toast('需要两个点'); undoStack.pop(); return; }
+                    const A = resolve(args[0]), B = resolve(args[1]);
+                    if (!A || !B || A.type !== 'point' || B.type !== 'point') { toast('参数无效'); undoStack.pop(); return; }
+                    const M = makePoint(0, 0, {
+                        free: false, parents: [A.id, B.id], rule: 'midpoint',
+                        color: '#d81b60', showTrail: true
+                    });
+                    M.name = autoName('point');
+                    break;
+                }
+                case 'Intersect': {
+                    if (args.length < 2) { toast('需要两个对象'); undoStack.pop(); return; }
+                    const A = resolve(args[0]), B = resolve(args[1]);
+                    if (!A || !B) { toast('对象不存在'); undoStack.pop(); return; }
+                    const pts = computeIntersections(A.id, B.id);
+                    if (!pts.length) { toast('没有交点'); undoStack.pop(); return; }
+                    pts.forEach((p, i) => {
+                        makePoint(p.x, p.y, {
+                            free: false, parents: [A.id, B.id], rule: 'intersect',
+                            branch: i, color: '#d81b60', showTrail: true
+                        });
+                    });
+                    break;
+                }
+                case 'Function': {
+                    const expr = args[0] || input.slice(input.indexOf('=') + 1);
+                    const fn = compileFn(expr, ['x']);
+                    if (!fn) { toast('表达式无法解析'); undoStack.pop(); return; }
+                    const o = makeGeneric('func', { expr });
+                    o._fn = fn;
+                    break;
+                }
+                case 'Perp': case 'Para': {
+                    if (args.length < 2) { toast('需要直线和点'); undoStack.pop(); return; }
+                    const L = resolve(args[0]), P = resolve(args[1]);
+                    if (!L || !P || P.type !== 'point') { toast('参数无效'); undoStack.pop(); return; }
+                    makeGeneric(cmd === 'Perp' ? 'perpendicular' : 'parallel',
+                        { line: L.id, point: P.id }, { color: cmd === 'Perp' ? '#00695c' : '#3f51b5' });
+                    break;
+                }
+                case 'PerpBis': {
+                    if (args.length < 2) { toast('需要两个点'); undoStack.pop(); return; }
+                    const A = resolve(args[0]), B = resolve(args[1]);
+                    if (!A || !B) { toast('参数无效'); undoStack.pop(); return; }
+                    makeGeneric('perpBisector', { a: A.id, b: B.id }, { color: COL.derived });
+                    break;
+                }
+                case 'AngBis': {
+                    if (args.length < 3) { toast('需要三点'); undoStack.pop(); return; }
+                    const A = resolve(args[0]), B = resolve(args[1]), C = resolve(args[2]);
+                    if (!A || !B || !C) { toast('参数无效'); undoStack.pop(); return; }
+                    makeGeneric('angleBisector', { a: A.id, b: B.id, c: C.id }, { color: COL.derived });
+                    break;
+                }
+                case 'Angle': {
+                    if (args.length < 3) { toast('需要三点'); undoStack.pop(); return; }
+                    const A = resolve(args[0]), B = resolve(args[1]), C = resolve(args[2]);
+                    if (!A || !B || !C) { toast('参数无效'); undoStack.pop(); return; }
+                    const o = makeGeneric('angle', { a: A.id, b: B.id, c: C.id }, { color: COL.angle });
+                    o.name = autoName('angle');
+                    break;
+                }
+                case 'Distance': {
+                    if (args.length < 2) { toast('需要两个点'); undoStack.pop(); return; }
+                    const A = resolve(args[0]), B = resolve(args[1]);
+                    if (!A || !B) { toast('参数无效'); undoStack.pop(); return; }
+                    makeGeneric('distance', { a: A.id, b: B.id }, { color: COL.derived });
+                    break;
+                }
+                case 'Tangent': {
+                    if (args.length < 2) { toast('用法：切线(曲线, 点)'); undoStack.pop(); return; }
+                    const C = resolve(args[0]), P = resolve(args[1]);
+                    if (!C || !P || P.type !== 'point') { toast('参数无效'); undoStack.pop(); return; }
+                    makeGeneric('tangent', { curve: C.id, point: P.id }, { color: COL.tangent });
+                    break;
+                }
+                case 'Ellipse': {
+                    if (args.length < 3) { toast('需要三点'); undoStack.pop(); return; }
+                    const F1 = resolve(args[0]), F2 = resolve(args[1]), P = resolve(args[2]);
+                    if (!F1 || !F2 || !P) { toast('参数无效'); undoStack.pop(); return; }
+                    makeGeneric('ellipse', { f1: F1.id, f2: F2.id, through: P.id }, { color: COL.conic });
+                    break;
+                }
+                case 'Parabola': {
+                    if (args.length < 2) { toast('需要顶点和焦点'); undoStack.pop(); return; }
+                    const V = resolve(args[0]), F = resolve(args[1]);
+                    if (!V || !F) { toast('参数无效'); undoStack.pop(); return; }
+                    makeGeneric('parabola', { vertex: V.id, focus: F.id }, { color: COL.conic });
+                    break;
+                }
+                case 'Hyperbola': {
+                    if (args.length < 3) { toast('需要三点'); undoStack.pop(); return; }
+                    const F1 = resolve(args[0]), F2 = resolve(args[1]), P = resolve(args[2]);
+                    if (!F1 || !F2 || !P) { toast('参数无效'); undoStack.pop(); return; }
+                    makeGeneric('hyperbola', { f1: F1.id, f2: F2.id, through: P.id }, { color: COL.conic });
+                    break;
+                }
+                case 'Slider': {
+                    const o = {
+                        id: idSeq++, type: 'slider', name: args[0] || autoName('slider'),
+                        value: 1, min: -5, max: 5, step: 0.01,
+                        x: 60, y: 80 + objects.filter(x => x.type === 'slider').length * 66,
+                        color: COL.slider, width: 2, visible: true, labelVisible: true
+                    };
+                    objects.push(o);
+                    break;
+                }
+                default:
+                    toast('未知命令：' + cmd);
+                    undoStack.pop();
+                    return;
+            }
+            evaluateAll(); updatePanel(); draw();
+        }
+
+        /* ==============================================================
+           Toast / 视图
+           ============================================================== */
+        let toastTimer = null;
+        function toast(msg) {
+            toastEl.textContent = msg;
+            toastEl.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => toastEl.classList.remove('show'), 1800);
+        }
+        function resetView() { view.x = 0; view.y = 0; view.scale = 64; draw(); }
+        function fitView() {
+            const pts = objects.filter(o => o.type === 'point' && o.valid !== false);
+            if (!pts.length) { resetView(); return; }
+            let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+            for (const p of pts) {
+                minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x);
+                minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y);
+            }
+            const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
+            const w = Math.max(maxX - minX, 2), h = Math.max(maxY - minY, 2);
+            view.scale = clamp(Math.min(W / (w * 1.4), H / (h * 1.4)), 4, 900);
+            view.x = cx; view.y = cy;
+            draw();
+        }
+
+        /* ==============================================================
+           UI
+           ============================================================== */
+        document.querySelectorAll('.tool[data-tool]').forEach(btn => {
+            btn.addEventListener('click', () => setTool(btn.dataset.tool));
+        });
+        document.getElementById('btnUndo').addEventListener('click', undo);
+        document.getElementById('btnRedo').addEventListener('click', redo);
+        document.getElementById('btnReset').addEventListener('click', () => { resetView(); toast('视图已重置'); });
+        document.getElementById('btnFit').addEventListener('click', fitView);
+        document.getElementById('btnClear').addEventListener('click', () => {
+            if (!objects.length) { toast('画布已是空的'); return; }
+            if (confirm('清空画布上的所有对象？')) clearAll();
+        });
+        document.getElementById('zIn').addEventListener('click', () => { view.scale = clamp(view.scale * 1.25, 3, 1600); draw(); });
+        document.getElementById('zOut').addEventListener('click', () => { view.scale = clamp(view.scale / 1.25, 3, 1600); draw(); });
+        document.getElementById('zFit').addEventListener('click', fitView);
+
+        document.getElementById('cbGrid').addEventListener('change', e => { cfg.grid = e.target.checked; draw(); });
+        document.getElementById('cbAxes').addEventListener('change', e => { cfg.axes = e.target.checked; draw(); });
+        document.getElementById('cbLabel').addEventListener('change', e => { cfg.labels = e.target.checked; draw(); });
+        document.getElementById('cbFade').addEventListener('change', e => { cfg.fade = e.target.checked; draw(); });
+        document.getElementById('clearSel').addEventListener('click', () => {
+            selectedId = null; updatePanel(); draw();
+        });
+        cmdInput.addEventListener('keydown', e => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const v = cmdInput.value;
+                if (v.trim()) { executeCommand(v); cmdInput.value = ''; }
+            } else if (e.key === 'Escape') { cmdInput.blur(); }
+            e.stopPropagation();
+        });
+
+        window.addEventListener('keydown', e => {
+            const tag = (e.target && e.target.tagName) || '';
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+            if (e.code === 'Space' && (e.target === document.body || e.target === canvas)) {
+                e.preventDefault();
+                anim.playing = !anim.playing;
+                setPlayUI();
+                toast(anim.playing ? '动画播放中' : '动画已暂停');
+                return;
+            }
+            if (e.code === 'Space' && !spaceDown) {
+                spaceDown = true;
+                canvas.style.cursor = 'grab';
+                e.preventDefault();
+                return;
+            }
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+                e.preventDefault();
+                e.shiftKey ? redo() : undo();
+                return;
+            }
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
+                e.preventDefault(); redo(); return;
+            }
+            const map = {
+                '1': 'move', '2': 'point', '3': 'animPoint', '4': 'trace', '5': 'locus',
+                '6': 'segment', '7': 'line', '8': 'ray', '9': 'vector',
+                'c': 'circle', 'C': 'circle',
+                'p': 'polygon', 'P': 'polygon',
+                'o': 'circumcircle', 'O': 'circumcircle',
+                'j': 'incircle', 'J': 'incircle',
+                'm': 'midpoint', 'M': 'midpoint',
+                'n': 'nDivi', 'N': 'nDivi',
+                'i': 'intersect', 'I': 'intersect',
+                'q': 'perpendicular', 'Q': 'perpendicular',
+                'w': 'parallel', 'W': 'parallel',
+                'e': 'perpBisector', 'E': 'perpBisector',
+                'r': 'angleBisector', 'R': 'angleBisector',
+                't': 'tangent', 'T': 'tangent',
+                'f': 'func', 'F': 'func',
+                'a': 'angle', 'A': 'angle',
+                'd': 'distance', 'D': 'distance'
+            };
+            if (map[e.key]) { setTool(map[e.key]); return; }
+
+            if (e.key === 'Delete' || e.key === 'Backspace') {
+                if (selectedId != null) {
+                    e.preventDefault();
+                    pushUndo(); removeObject(selectedId); toast('已删除');
+                }
+                return;
+            }
+            if (e.key === 'Escape') {
+                pending = []; selectedId = null;
+                updatePanel(); draw();
+                return;
+            }
+            if (e.key === 'Enter' && currentTool === 'polygon' && pending.length >= 3) {
+                finishPolygon(); return;
+            }
+            if (e.key === 'Home') { resetView(); return; }
+            if (e.key === '+' || e.key === '=') { view.scale = clamp(view.scale * 1.2, 3, 1600); draw(); return; }
+            if (e.key === '-' || e.key === '_') { view.scale = clamp(view.scale / 1.2, 3, 1600); draw(); return; }
+        });
+        window.addEventListener('keyup', e => {
+            if (e.code === 'Space') {
+                spaceDown = false;
+                if (!dragState) canvas.style.cursor = (currentTool === 'move') ? 'default' : 'crosshair';
+            }
+        });
+        window.addEventListener('blur', () => { dragState = null; spaceDown = false; });
+
+        /* ==============================================================
+           初始化：完整演示动点、从动点轨迹、内切圆、外接圆、动点圆
+           ============================================================== */
+        function init() {
+            new ResizeObserver(() => resize()).observe(wrap);
+            resize();
+
+            /* 1. 抛物线 f(x) = x²/3 - 1 */
+            const f1 = makeGeneric('func', { expr: 'x^2/3 - 1', name: 'f' }, { color: COL.func });
+            f1._fn = compileFn('x^2/3 - 1', ['x']);
+
+            /* 2. 大圆：以 O 为圆心，A 为圆周点 */
+            const O = makePoint(0, 0, { name: 'O' });
+            const A = makePoint(2.5, 0, { name: 'A' });
+            const bigCircle = makeCircle(O, A);
+
+            /* 3. 自动动点 P：沿大圆运动（★轨迹追踪已开） */
+            const P = makePoint(0, 0, {
+                free: false, pathId: bigCircle.id, t: 0.15,
+                animating: true, animSpeed: 0.9, direction: 1,
+                showTrail: true, color: COL.anim, size: 5.5
+            });
+            P.name = 'P';
+
+            /* 4. 自动动点 Q：沿抛物线运动（★轨迹追踪已开） */
+            const Q = makePoint(0, 0, {
+                free: false, pathId: f1.id, t: 0.35,
+                animating: true, animSpeed: 1.2, direction: 1,
+                showTrail: true, color: '#c2185b', size: 5.5
+            });
+            Q.name = 'Q';
+
+            /* 5. ★★ 从动点 M = P、Q 的中点：自动记录轨迹
+                  —— 这正是"因动点而动的点也能记录轨迹"的演示 ★★ */
+            const M = makePoint(0, 0, {
+                free: false, parents: [P.id, Q.id], rule: 'midpoint',
+                color: '#d81b60', size: 5.5, showTrail: true
+            });
+            M.name = 'M';
+
+            /* 6. 线段 PQ */
+            makeLine('segment', P, Q);
+
+            /* 7. ★ 以动点 P 为圆心、通过 M 的圆（验证"动点作圆心，圆会跟着动"） */
+            const movingCircle = makeCircle(P, M, { color: '#00838f' });
+            movingCircle.name = 'cM';
+
+            /* 8. 三角形 ABC 与外接圆 + 内切圆 */
+            const TA = makePoint(-4, -1.5, { name: 'T₁' });
+            const TB = makePoint(-1.5, -3, { name: 'T₂' });
+            const TC = makePoint(-2.8, -0.6, { name: 'T₃' });
+            const tri = makePolygon([TA, TB, TC], { color: '#e8710a' });
+            tri.name = '△ABC';
+
+            /* 9. 三角形外接圆 */
+            const circum = makeCircle(null, null, {
+                polygonId: tri.id, derived: 'circumcircle',
+                color: COL.circumcircle, width: 2
+            });
+            circum.name = '外接圆';
+
+            /* 10. 三角形内切圆 */
+            const inCircle = makeCircle(null, null, {
+                polygonId: tri.id, derived: 'incircle',
+                color: COL.incircle, width: 2
+            });
+            inCircle.name = '内切圆';
+
+            /* 11. 滑块 t（用于演示轨迹线） */
+            const t1 = {
+                id: idSeq++, type: 'slider', name: 't', value: 0.5, min: -3, max: 3, step: 0.02,
+                x: 60, y: 70, color: COL.slider, width: 2, visible: true, labelVisible: true
+            };
+            objects.push(t1);
+
+            /* 12. 从动点 R 由滑块 t 驱动，用"轨迹线"生成完整轨迹 */
+            const R = makePoint(0, 0, {
+                free: false, rule: 'expr', color: '#00695c', size: 5,
+                showTrail: false
+            });
+            R.name = 'R';
+            R._fx = () => t1.value;
+            R._fy = () => t1.value * t1.value / 3 - 1;
+            R.parents = [t1.id];
+
+            /* 13. 轨迹线 */
+            const loc = makeGeneric('locus', { point: R.id, driver: t1.id }, { color: COL.locus });
+            computeLocus(loc);
+
+            evaluateAll();
+            updatePanel();
+            setTool('move');
+            setPlayUI();
+            startAnimLoop();
+            draw();
+        }
+
+        init();
+    </script>
+</body>
+
+</html>
